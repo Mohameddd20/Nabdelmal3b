@@ -11,7 +11,11 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 8000;
-const DB_FILE = path.join(__dirname, 'articles_db.json');
+const SEED_DB_FILE = path.join(__dirname, 'articles_db.json');
+// دعم الكتابة في /tmp على الاستضافات المجانية مثل Vercel التي لا تطلب بطاقة بنكية
+const DB_FILE = process.env.VERCEL
+    ? path.join('/tmp', 'articles_db.json')
+    : SEED_DB_FILE;
 const HTML_FILE = path.join(__dirname, 'frontend', 'index.html');
 const YSSCORES_NEWS_URL = 'https://www.ysscores.com/ar/news';
 const YSSCORES_MATCHES_URL = 'https://www.ysscores.com/ar';
@@ -24,6 +28,7 @@ const BROWSER_HEADERS = {
 
 let cachedMatches = [];
 let lastMatchesFetch = 0;
+let lastNewsSyncTime = 0;
 const matchDetailsCache = new Map();
 
 function getEnvKey() {
@@ -39,16 +44,25 @@ function getEnvKey() {
 }
 
 function loadArticles() {
-    if (!fs.existsSync(DB_FILE)) return [];
-    try {
-        return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    } catch {
-        return [];
+    if (fs.existsSync(DB_FILE)) {
+        try {
+            return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+        } catch {}
     }
+    if (fs.existsSync(SEED_DB_FILE)) {
+        try {
+            return JSON.parse(fs.readFileSync(SEED_DB_FILE, 'utf8'));
+        } catch {}
+    }
+    return [];
 }
 
 function saveArticles(list) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(list, null, 2), 'utf8');
+    try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(list, null, 2), 'utf8');
+    } catch (e) {
+        console.warn('Write DB notice:', e.message);
+    }
 }
 
 function cleanHtmlText(str) {
@@ -267,6 +281,7 @@ async function syncAllNewsFromYSScores() {
 
     existingArticles.sort((a, b) => (b.id || 0) - (a.id || 0));
     saveArticles(existingArticles);
+    lastNewsSyncTime = Date.now();
     console.log(`📊 إجمالي الأخبار المحفوظة الآن: ${existingArticles.length} خبر (تم إضافة ${addedCount} جديد).`);
     return { addedCount, total: existingArticles.length };
 }
@@ -599,7 +614,8 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && urlObj.pathname === '/api/articles') {
         let articles = loadArticles();
-        if (articles.length === 0) {
+        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+        if (articles.length === 0 || lastNewsSyncTime < fiveMinutesAgo) {
             await syncAllNewsFromYSScores();
             articles = loadArticles();
         }
@@ -643,24 +659,29 @@ const server = http.createServer(async (req, res) => {
     res.end('Not Found');
 });
 
-server.listen(PORT, async () => {
-    console.log(`====================================================`);
-    console.log(`🚀 بوابة نبض الملاعب تعمل الآن على: http://localhost:${PORT}`);
-    console.log(`🔗 سحب جميع الأخبار كل 5 دقائق من: ${YSSCORES_NEWS_URL}`);
-    console.log(`⚽ مركز المباريات وتفاصيل اللقاء متصل بـ YSScores + ESPN API`);
-    console.log(`====================================================`);
-    try {
-        await syncAllNewsFromYSScores();
-        await fetchLiveAndTodayMatches();
-    } catch (e) {
-        console.error('Initial sync error:', e.message);
-    }
-
-    setInterval(async () => {
+// تشغيل الخادم محلياً أو على الاستضافات العادية، وتصديره ليعمل على Vercel بدون كارت بنكي
+if (!process.env.VERCEL) {
+    server.listen(PORT, async () => {
+        console.log(`====================================================`);
+        console.log(`🚀 بوابة نبض الملاعب تعمل الآن على: http://localhost:${PORT}`);
+        console.log(`🔗 سحب جميع الأخبار كل 5 دقائق من: ${YSSCORES_NEWS_URL}`);
+        console.log(`⚽ مركز المباريات وتفاصيل اللقاء متصل بـ YSScores + ESPN API`);
+        console.log(`====================================================`);
         try {
             await syncAllNewsFromYSScores();
+            await fetchLiveAndTodayMatches();
         } catch (e) {
-            console.error('Background auto-sync error:', e.message);
+            console.error('Initial sync error:', e.message);
         }
-    }, 5 * 60 * 1000);
-});
+
+        setInterval(async () => {
+            try {
+                await syncAllNewsFromYSScores();
+            } catch (e) {
+                console.error('Background auto-sync error:', e.message);
+            }
+        }, 5 * 60 * 1000);
+    });
+}
+
+module.exports = server;
