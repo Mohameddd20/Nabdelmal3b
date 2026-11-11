@@ -974,6 +974,66 @@ async function fetchLeagueStandings(leagueKey = 'epl') {
     return result;
 }
 
+/**
+ * 8. جلب جدول هدافي البطولة الحقيقي من ESPN API
+ */
+const scorersCache = new Map();
+async function fetchLeagueScorers(leagueKey = 'epl') {
+    const config = SUPPORTED_LEAGUES[leagueKey] || SUPPORTED_LEAGUES.epl;
+    const now = Date.now();
+
+    if (scorersCache.has(leagueKey)) {
+        const cached = scorersCache.get(leagueKey);
+        if ((now - cached.timestamp) < 15 * 60 * 1000) {
+            return cached.data;
+        }
+    }
+
+    const scorers = [];
+    if (config.espnCode) {
+        try {
+            const espnStatsUrl = `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${config.espnCode}/statistics`;
+            const r = await fetch(espnStatsUrl);
+            if (r.ok) {
+                const data = await r.json();
+                const goalsCategory = (data.stats || data.categories || []).find(c => c.name === 'goalsLeaders');
+                if (goalsCategory && goalsCategory.leaders) {
+                    for (let i = 0; i < goalsCategory.leaders.length; i++) {
+                        const l = goalsCategory.leaders[i];
+                        const athlete = l.athlete || {};
+                        const team = athlete.team || {};
+                        const statsArr = athlete.statistics || [];
+                        const assistsStat = statsArr.find(s => s.name === 'goalAssists');
+                        const appsStat = statsArr.find(s => s.name === 'appearances');
+
+                        scorers.push({
+                            rank: i + 1,
+                            name: athlete.displayName || 'لاعب',
+                            team: translateTeamName(team.displayName || team.name || 'الفريق'),
+                            team_logo: (team.logos && team.logos[0] && team.logos[0].href) || '',
+                            goals: l.value || 0,
+                            assists: assistsStat ? assistsStat.value : 0,
+                            played: appsStat ? appsStat.value : '-',
+                            photo: `https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/${athlete.id}.png&w=96&h=96&scale=crop`
+                        });
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn(`ESPN scorers fetch warning (${leagueKey}):`, e.message);
+        }
+    }
+
+    const result = {
+        league: leagueKey,
+        league_name: config.name,
+        count: scorers.length,
+        scorers
+    };
+    scorersCache.set(leagueKey, { timestamp: now, data: result });
+    return result;
+}
+
 const requestHandler = async (req, res) => {
     try {
         const host = req.headers.host || 'nabdelmal3b-2bbh.vercel.app';
@@ -1086,6 +1146,13 @@ const requestHandler = async (req, res) => {
         if (req.method === 'GET' && urlObj.pathname === '/api/standings') {
             const leagueKey = urlObj.searchParams.get('league') || 'epl';
             const data = await fetchLeagueStandings(leagueKey);
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify(data));
+        }
+
+        if (req.method === 'GET' && urlObj.pathname === '/api/scorers') {
+            const leagueKey = urlObj.searchParams.get('league') || 'epl';
+            const data = await fetchLeagueScorers(leagueKey);
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
             return res.end(JSON.stringify(data));
         }

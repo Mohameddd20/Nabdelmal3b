@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" class="dark">
+<html lang="ar" dir="rtl" id="root-html" class="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -68,6 +68,37 @@
         .live-glow {
             box-shadow: 0 0 18px rgba(239, 68, 68, 0.28);
         }
+        /* وضع فاتح (Light Mode) */
+        html.light body {
+            background-color: #f1f5f9;
+            background-image:
+                radial-gradient(at 15% 5%, rgba(16, 185, 129, 0.08) 0px, transparent 45%),
+                radial-gradient(at 85% 15%, rgba(6, 182, 212, 0.05) 0px, transparent 45%);
+            color: #0f172a;
+        }
+        html.light .glass-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(241,245,249,0.96));
+            border-color: rgba(0,0,0,0.08);
+        }
+        html.light header, html.light #top-bars-container {
+            background: rgba(255,255,255,0.95) !important;
+            border-color: rgba(0,0,0,0.08) !important;
+        }
+        html.light footer {
+            background: #e2e8f0;
+            border-color: rgba(0,0,0,0.08);
+        }
+        html.light .text-white { color: #0f172a !important; }
+        html.light .text-slate-200 { color: #1e293b !important; }
+        html.light .text-slate-300 { color: #334155 !important; }
+        html.light .text-slate-400 { color: #475569 !important; }
+        html.light .bg-slate-900, html.light .bg-slate-900\/90, html.light .bg-slate-900\/80, html.light .bg-slate-900\/95 {
+            background-color: rgba(226,232,240,0.95) !important;
+        }
+        html.light .bg-slate-950 { background-color: #e2e8f0 !important; }
+        html.light .border-slate-800 { border-color: rgba(0,0,0,0.1) !important; }
+        html.light .text-emerald-400 { color: #059669 !important; }
+        html.light input, html.light textarea { background-color: #f8fafc !important; color: #0f172a !important; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-950">
@@ -140,6 +171,17 @@
                 </nav>
             </div>
 
+            <!-- زر التبديل بين الوضع المظلم والفاتح + شريط البحث الفوري -->
+            <div class="flex items-center gap-3">
+                <!-- زر Dark/Light Mode -->
+                <button
+                    id="theme-toggle-btn"
+                    onclick="toggleTheme()"
+                    class="w-10 h-10 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center transition shrink-0"
+                    title="تبديل الوضع المظلم / الفاتح"
+                >
+                    <span id="theme-toggle-icon">🌙</span>
+                </button>
             <!-- شريط البحث الفوري -->
             <div class="flex-1 max-w-xs lg:max-w-md hidden md:block">
                 <div class="relative">
@@ -155,9 +197,9 @@
                     </svg>
                 </div>
             </div>
+            </div><!-- end flex items-center gap-3 for theme + search -->
         </div>
     </header>
-
     <!-- 3. شريط نتائج المباريات السريع + شريط التصنيفات (غير مثبتة حتى تختفي تماماً عند النزول لأسفل وتبقى الشاشة كاملة للموقع) -->
     <div id="top-bars-container" class="border-b border-slate-800/70 bg-slate-950/90">
         <div class="py-2.5 border-b border-slate-800/60">
@@ -272,6 +314,33 @@
                         </div>
                         <div id="trending-sidebar-list" class="space-y-4"></div>
                     </div>
+
+                    <!-- استطلاع رأي كروي يومي تفاعلي -->
+                    <div id="daily-poll-widget" class="glass-card rounded-3xl p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                                <span>🗳️</span> استطلاع رأي اليوم
+                            </h3>
+                            <span class="text-[11px] text-slate-400">شارك برأيك!</span>
+                        </div>
+                        <div id="poll-content"></div>
+                    </div>
+
+                    <!-- زر تفعيل إشعارات المباريات -->
+                    <div id="notify-widget" class="glass-card rounded-3xl p-6 space-y-3 border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-cyan-500/5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl">🔔</div>
+                            <div>
+                                <h3 class="text-sm font-extrabold text-white">تنبيهات المباريات العاجلة</h3>
+                                <p class="text-[11px] text-slate-400">استقبل إشعاراً فور انطلاق مباراتك المفضلة!</p>
+                            </div>
+                        </div>
+                        <button id="notify-btn" onclick="requestNotifications()"
+                            class="w-full py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm transition">
+                            🔔 تفعيل الإشعارات
+                        </button>
+                        <p id="notify-status" class="text-xs text-center text-slate-400 hidden"></p>
+                    </div>
                 </aside>
             </div>
         </section>
@@ -321,6 +390,18 @@
                         </div>
                         <h1 id="standings-league-title" class="text-2xl sm:text-3xl font-black text-white">جدول ترتيب الدوري الإنجليزي الممتاز</h1>
                     </div>
+
+                    <!-- تبويبات الترتيب / الهدافين -->
+                    <div class="flex items-center gap-2 bg-slate-950/80 p-1 rounded-2xl border border-slate-800">
+                        <button id="sub-tab-standings" onclick="switchStandingsSubTab('standings')"
+                            class="px-4 py-2 rounded-xl text-xs font-extrabold transition bg-emerald-500 text-slate-950">
+                            🏆 الترتيب
+                        </button>
+                        <button id="sub-tab-scorers" onclick="switchStandingsSubTab('scorers')"
+                            class="px-4 py-2 rounded-xl text-xs font-extrabold transition text-slate-300 hover:text-white bg-slate-900 border border-slate-800">
+                            ⚽ الهدافون
+                        </button>
+                    </div>
                 </div>
 
                 <!-- أزرار اختيار الدوري -->
@@ -330,7 +411,7 @@
             </div>
 
             <!-- جدول الترتيب الكامل -->
-            <div class="glass-card rounded-3xl overflow-hidden border border-slate-800/90 shadow-2xl">
+            <div id="standings-table-container" class="glass-card rounded-3xl overflow-hidden border border-slate-800/90 shadow-2xl">
                 <div class="overflow-x-auto">
                     <table class="w-full text-right border-collapse">
                         <thead>
@@ -347,6 +428,27 @@
                             </tr>
                         </thead>
                         <tbody id="standings-table-body" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+                            <!-- يتم ملؤها عبر JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- جدول الهدافين -->
+            <div id="scorers-table-container" class="hidden glass-card rounded-3xl overflow-hidden border border-slate-800/90 shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/95 border-b border-slate-800 text-[11px] sm:text-xs font-extrabold text-slate-400">
+                                <th class="py-4 px-4 w-12 text-center">#</th>
+                                <th class="py-4 px-4">اللاعب</th>
+                                <th class="py-4 px-3 text-center">النادي</th>
+                                <th class="py-4 px-3 text-center hidden sm:table-cell">لعب</th>
+                                <th class="py-4 px-3 text-center">صناعة</th>
+                                <th class="py-4 px-5 text-center text-emerald-400">الأهداف ⚽</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scorers-table-body" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
                             <!-- يتم ملؤها عبر JavaScript -->
                         </tbody>
                     </table>
@@ -1011,7 +1113,11 @@
         async function selectStandingsLeague(leagueKey) {
             activeStandingsLeague = leagueKey;
             renderStandingsLeaguesBar();
-            await loadStandingsFromServer(leagueKey);
+            if (typeof currentStandingsSubTab !== 'undefined' && currentStandingsSubTab === 'scorers') {
+                await loadScorers(leagueKey);
+            } else {
+                await loadStandingsFromServer(leagueKey);
+            }
         }
 
         async function loadStandingsFromServer(leagueKey) {
@@ -1771,6 +1877,281 @@
                     </div>
                 </div>
             `;
+        }
+    </script>
+
+    <!-- ==================== وظائف الميزات الجديدة (جدول الهدافين + الاستطلاع + الإشعارات + Dark/Light Mode) ==================== -->
+    <script>
+        // ---- Dark / Light Mode ----
+        function toggleTheme() {
+            const root = document.getElementById('root-html');
+            const icon = document.getElementById('theme-toggle-icon');
+            if (root.classList.contains('dark')) {
+                root.classList.remove('dark');
+                root.classList.add('light');
+                icon.textContent = '☀️';
+                localStorage.setItem('koratime-theme', 'light');
+            } else {
+                root.classList.remove('light');
+                root.classList.add('dark');
+                icon.textContent = '🌙';
+                localStorage.setItem('koratime-theme', 'dark');
+            }
+        }
+        (function() {
+            const saved = localStorage.getItem('koratime-theme');
+            const root = document.getElementById('root-html');
+            const icon = document.getElementById('theme-toggle-icon');
+            if (saved === 'light') {
+                root.classList.remove('dark');
+                root.classList.add('light');
+                if (icon) icon.textContent = '☀️';
+            }
+        })();
+
+        // ---- جدول الهدافين ----
+        let activeScorersLeague = 'epl';
+        let currentStandingsSubTab = 'standings';
+
+        function switchStandingsSubTab(tab) {
+            currentStandingsSubTab = tab;
+            const standingsContainer = document.getElementById('standings-table-container');
+            const scorersContainer = document.getElementById('scorers-table-container');
+            const btnStd = document.getElementById('sub-tab-standings');
+            const btnScr = document.getElementById('sub-tab-scorers');
+
+            if (tab === 'scorers') {
+                standingsContainer.classList.add('hidden');
+                scorersContainer.classList.remove('hidden');
+                btnScr.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition bg-emerald-500 text-slate-950';
+                btnStd.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition text-slate-300 hover:text-white bg-slate-900 border border-slate-800';
+                loadScorers(activeStandingsLeague);
+            } else {
+                scorersContainer.classList.add('hidden');
+                standingsContainer.classList.remove('hidden');
+                btnStd.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition bg-emerald-500 text-slate-950';
+                btnScr.className = 'px-4 py-2 rounded-xl text-xs font-extrabold transition text-slate-300 hover:text-white bg-slate-900 border border-slate-800';
+            }
+        }
+
+        async function loadScorers(leagueKey) {
+            const tbody = document.getElementById('scorers-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-slate-400 animate-pulse font-bold">جاري تحميل جدول الهدافين...</td></tr>`;
+            try {
+                const res = await fetch(`/api/scorers?league=${encodeURIComponent(leagueKey)}`);
+                if (!res.ok) throw new Error('API error');
+                const data = await res.json();
+                if (!data.scorers || data.scorers.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-slate-400 font-bold">لا تتوفر بيانات الهدافين لهذه البطولة حالياً</td></tr>`;
+                    return;
+                }
+                const medals = ['🥇', '🥈', '🥉'];
+                tbody.innerHTML = data.scorers.slice(0, 20).map((s, i) => `
+                    <tr class="hover:bg-slate-900/70 transition">
+                        <td class="py-3 px-4 text-center">
+                            <span class="font-black text-slate-300">${medals[i] || (i + 1)}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-3">
+                                <img src="${s.photo}" class="w-9 h-9 rounded-full object-cover bg-slate-900 border border-slate-800" onerror="this.src='https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96'" alt="${s.name}" />
+                                <span class="font-extrabold text-white text-xs sm:text-sm">${s.name}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <img src="${s.team_logo}" class="w-5 h-5 object-contain" onerror="this.style.display='none'" alt="" />
+                                <span class="text-xs text-slate-300 font-bold hidden sm:inline">${s.team}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-3 text-center text-slate-400 hidden sm:table-cell font-bold">${s.played}</td>
+                        <td class="py-3 px-3 text-center text-cyan-400 font-extrabold">${s.assists}</td>
+                        <td class="py-3 px-5 text-center">
+                            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-black">
+                                ⚽ ${s.goals}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-10 text-center text-slate-400 font-bold">تعذر تحميل بيانات الهدافين</td></tr>`;
+            }
+        }
+
+        // ---- استطلاع رأي يومي تفاعلي ----
+        const DAILY_POLLS = [
+            {
+                q: 'من تتوقع يفوز بدوري أبطال أوروبا هذا الموسم؟',
+                options: ['ريال مدريد', 'مانشستر سيتي', 'ميلان', 'برشلونة']
+            },
+            {
+                q: 'من يستحق الكرة الذهبية هذا العام؟',
+                options: ['فينيسيوس', 'هالاند', 'بيليغريم', 'مودريتش']
+            },
+            {
+                q: 'من يفوز بالدوري الإنجليزي الموسم القادم؟',
+                options: ['مانشستر سيتي', 'ليفربول', 'أرسنال', 'تشيلسي']
+            },
+            {
+                q: 'من تتوقع يفوز بكأس العالم للأندية؟',
+                options: ['ريال مدريد', 'مانشستر سيتي', 'بايرن ميونخ', 'الأهلي']
+            },
+            {
+                q: 'من أفضل مهاجم عربي في الوقت الحالي؟',
+                options: ['كريم بن زيمة', 'صالح', 'تريزيغيه', 'عمر مرموش']
+            },
+            {
+                q: 'ما أفضل دوري في العالم؟',
+                options: ['الدوري الإنجليزي', 'الدوري الإسباني', 'دوري أبطال أوروبا', 'الدوري الإيطالي']
+            },
+            {
+                q: 'من تتوقع يفوز في كلاسيكو الموسم القادم؟',
+                options: ['ريال مدريد', 'برشلونة', 'تعادل', 'صعب التوقع']
+            }
+        ];
+
+        function initDailyPoll() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayIdx = [...today].reduce((a, c) => a + c.charCodeAt(0), 0) % DAILY_POLLS.length;
+            const poll = DAILY_POLLS[todayIdx];
+            const storageKey = `koratime-poll-${today}`;
+            const voted = localStorage.getItem(storageKey);
+            const votes = JSON.parse(localStorage.getItem(`${storageKey}-votes`) || 'null') ||
+                poll.options.map(() => Math.floor(Math.random() * 300 + 50));
+
+            const box = document.getElementById('poll-content');
+            if (!box) return;
+
+            if (voted !== null) {
+                renderPollResults(box, poll, votes, Number(voted));
+            } else {
+                box.innerHTML = `
+                    <p class="text-sm font-extrabold text-white leading-relaxed mb-4">${poll.q}</p>
+                    <div class="space-y-2">
+                        ${poll.options.map((opt, i) => `
+                            <button onclick="votePoll(${i})"
+                                class="w-full text-right px-4 py-2.5 rounded-2xl bg-slate-900/80 hover:bg-emerald-500/15 hover:border-emerald-500/50 border border-slate-800 text-sm font-bold text-white transition flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-black text-emerald-400 flex items-center justify-center shrink-0">${i + 1}</span>
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-3 text-center">استطلاع يومي من KoraTime • نتيجة غير ملزمة</p>
+                `;
+            }
+        }
+
+        function votePoll(optIdx) {
+            const today = new Date().toISOString().split('T')[0];
+            const todayIdx = [...today].reduce((a, c) => a + c.charCodeAt(0), 0) % DAILY_POLLS.length;
+            const poll = DAILY_POLLS[todayIdx];
+            const storageKey = `koratime-poll-${today}`;
+            const votes = JSON.parse(localStorage.getItem(`${storageKey}-votes`) || 'null') ||
+                poll.options.map(() => Math.floor(Math.random() * 300 + 50));
+            votes[optIdx] += 1;
+            localStorage.setItem(storageKey, String(optIdx));
+            localStorage.setItem(`${storageKey}-votes`, JSON.stringify(votes));
+            const box = document.getElementById('poll-content');
+            renderPollResults(box, poll, votes, optIdx);
+        }
+
+        function renderPollResults(box, poll, votes, myVote) {
+            const total = votes.reduce((a, b) => a + b, 0) || 1;
+            box.innerHTML = `
+                <p class="text-sm font-extrabold text-white leading-relaxed mb-4">${poll.q}</p>
+                <div class="space-y-2.5">
+                    ${poll.options.map((opt, i) => {
+                        const pct = Math.round((votes[i] / total) * 100);
+                        const isMy = i === myVote;
+                        return `
+                            <div class="space-y-1">
+                                <div class="flex items-center justify-between text-xs font-bold">
+                                    <span class="${isMy ? 'text-emerald-400' : 'text-slate-300'}">${isMy ? '✔ ' : ''}${opt}</span>
+                                    <span class="${isMy ? 'text-emerald-400' : 'text-slate-400'}">${pct}%</span>
+                                </div>
+                                <div class="w-full h-2.5 rounded-full bg-slate-900 overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-700 ${isMy ? 'bg-emerald-500' : 'bg-slate-700'}" style="width:${pct}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <p class="text-[11px] text-slate-500 mt-3 text-center">${total.toLocaleString()} تصويت • استطلاع اليوم من KoraTime</p>
+            `;
+        }
+
+        // ---- إشعارات المباريات العاجلة ----
+        function requestNotifications() {
+            const btn = document.getElementById('notify-btn');
+            const status = document.getElementById('notify-status');
+
+            if (!('Notification' in window)) {
+                status.textContent = '⚠️ متصفحك لا يدعم الإشعارات حالياً.';
+                status.classList.remove('hidden');
+                return;
+            }
+
+            if (Notification.permission === 'granted') {
+                status.textContent = '✅ الإشعارات مفعّلة بالفعل! ستصلك تنبيهات المباريات تلقائياً.';
+                status.className = 'text-xs text-center text-emerald-400 font-bold';
+                status.classList.remove('hidden');
+                btn.textContent = '✅ الإشعارات مفعّلة';
+                btn.className = 'w-full py-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-extrabold text-sm cursor-default';
+                // إرسال إشعار ترحيبي فوري
+                new Notification('KoraTime | كورة تايم 🏟️', {
+                    body: 'تم تفعيل إشعارات المباريات! ستصلك أحداث المباريات المباشرة فوراً.',
+                    icon: 'https://koratime.vercel.app/favicon.ico'
+                });
+                return;
+            }
+
+            if (Notification.permission === 'denied') {
+                status.textContent = '❌ قمت بحظر الإشعارات. اذهب لإعدادات المتصفح وأعد السماح لهذا الموقع.';
+                status.className = 'text-xs text-center text-red-400 font-bold';
+                status.classList.remove('hidden');
+                return;
+            }
+
+            Notification.requestPermission().then(permission => {
+                status.classList.remove('hidden');
+                if (permission === 'granted') {
+                    status.textContent = '✅ ممتاز! ستصلك إشعارات المباريات الحية فوراً.';
+                    status.className = 'text-xs text-center text-emerald-400 font-bold';
+                    btn.textContent = '✅ الإشعارات مفعّلة';
+                    btn.className = 'w-full py-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-extrabold text-sm cursor-default';
+                    new Notification('KoraTime | كورة تايم 🏟️', {
+                        body: 'تم تفعيل الإشعارات بنجاح! سنخبرك بكل هدف وحدث مهم.',
+                        icon: 'https://koratime.vercel.app/favicon.ico'
+                    });
+                } else {
+                    status.textContent = '⚠️ لم تُفعَّل الإشعارات. يمكنك تفعيلها لاحقاً من إعدادات المتصفح.';
+                    status.className = 'text-xs text-center text-amber-400 font-bold';
+                }
+            });
+        }
+
+        // تحقق من حالة الإشعارات عند التحميل
+        (function checkNotifyStatus() {
+            const btn = document.getElementById('notify-btn');
+            const status = document.getElementById('notify-status');
+            if (!btn || !('Notification' in window)) return;
+            if (Notification.permission === 'granted') {
+                btn.textContent = '✅ الإشعارات مفعّلة';
+                btn.className = 'w-full py-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-extrabold text-sm cursor-default';
+                btn.onclick = null;
+                status.textContent = 'ستصلك تنبيهات المباريات الحية فوراً!';
+                status.className = 'text-xs text-center text-emerald-400 font-bold';
+                status.classList.remove('hidden');
+            }
+        })();
+
+        // تهيئة كل الميزات عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            initDailyPoll();
+        });
+        // في حال التحميل اكتمل مسبقاً
+        if (document.readyState !== 'loading') {
+            initDailyPoll();
         }
     </script>
 </body>
