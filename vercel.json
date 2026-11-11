@@ -8,7 +8,8 @@
         "includeFiles": [
           "frontend/**",
           "index.html",
-          "articles_db.json"
+          "articles_db.json",
+          "ads.txt"
         ]
       }
     }

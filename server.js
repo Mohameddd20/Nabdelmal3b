@@ -1,5 +1,5 @@
 /**
- * خادم متكامل لمنصة "نبض الملاعب" (متوافق مع Google AdSense و SEO و Vercel):
+ * خادم متكامل لمنصة "KoraTime | كورة تايم" (متوافق مع Google AdSense و SEO و Vercel):
  * 1. يسحب جميع الأخبار الرياضية من https://www.ysscores.com/ar/news تلقائياً كل 5 دقائق.
  * 2. يضمن أن يكون كل مقال غنياً ومفصلاً (أكثر من 320 - 400 كلمة على الأقل) مع عناوين فرعية وتحليل شامل.
  * 3. يسحب جدول المباريات مقسماً حسب البطولة مع توليد خط زمني كامل للأحداث والإحصائيات لكل مباراة.
@@ -132,7 +132,7 @@ function buildComprehensiveArticleContent(rawArticle) {
     const category = normalizeCategory(rawArticle.category, title);
     const tags = Array.isArray(rawArticle.tags) && rawArticle.tags.length > 0
         ? rawArticle.tags
-        : [category, 'كرة القدم العالمية', 'نبض الملاعب'];
+        : [category, 'كرة القدم العالمية', 'KoraTime'];
     const mainSubject = tags[0] || category;
     const secondSubject = tags[1] || 'المنافسات الكروية';
 
@@ -312,7 +312,7 @@ async function scrapeSingleYSScoresArticle(articleUrl, newsId) {
         category,
         tags,
         created_at: dateText,
-        source_name: 'نبض الملاعب'
+        source_name: 'KoraTime | كورة تايم'
     };
 }
 
@@ -988,7 +988,11 @@ const requestHandler = async (req, res) => {
 
         if (req.method === 'GET' && urlObj.pathname === '/ads.txt') {
             res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-            return res.end(`# Google AdSense ads.txt\ngoogle.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n`);
+            const adsPath = path.join(__dirname, 'ads.txt');
+            if (fs.existsSync(adsPath)) {
+                return res.end(fs.readFileSync(adsPath, 'utf8'));
+            }
+            return res.end(`google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n`);
         }
 
         if (req.method === 'GET' && urlObj.pathname === '/sitemap.xml') {
@@ -1093,7 +1097,7 @@ if (!process.env.VERCEL) {
     const server = http.createServer(requestHandler);
     server.listen(PORT, async () => {
         console.log(`====================================================`);
-        console.log(`🚀 بوابة نبض الملاعب تعمل الآن على: http://localhost:${PORT}`);
+        console.log(`🚀 بوابة KoraTime (كورة تايم) تعمل الآن على: http://localhost:${PORT}`);
         console.log(`🔗 سحب جميع الأخبار كل 5 دقائق من: ${YSSCORES_NEWS_URL}`);
         console.log(`⚽ مركز المباريات وتفاصيل اللقاء متصل بـ YSScores + ESPN API`);
         console.log(`====================================================`);

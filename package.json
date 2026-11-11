@@ -1,7 +1,7 @@
 {
-  "name": "nabd-elmalab-sports-portal",
+  "name": "koratime-sports-portal",
   "version": "1.0.0",
-  "description": "منصة نبض الملاعب للأخبار الرياضية الأوتوماتيكية ونتائج المباريات المباشرة",
+  "description": "منصة KoraTime (كورة تايم) للأخبار الرياضية الأوتوماتيكية ونتائج المباريات المباشرة",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
