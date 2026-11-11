@@ -1,0 +1,12 @@
+{
+  "name": "nabd-elmalab-sports-portal",
+  "version": "1.0.0",
+  "description": "منصة نبض الملاعب للأخبار الرياضية الأوتوماتيكية ونتائج المباريات المباشرة",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
