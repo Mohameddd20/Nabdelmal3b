@@ -260,6 +260,12 @@ async function scrapeSingleYSScoresArticle(articleUrl, newsId) {
     const originalTitle = h1Match ? cleanHtmlText(h1Match[1]) : '';
     if (!originalTitle) return null;
 
+    // تصفية وحجب الأخبار الإعلانية القديمة أو روابط تحميل التطبيقات الخارجية مثل (يلا شووت)
+    const lowerTitle = originalTitle.toLowerCase();
+    if (lowerTitle.includes('تحميل تطبيق') || lowerTitle.includes('يلا شوت') || lowerTitle.includes('يلا شووت') || lowerTitle.includes('تطبيق يلا')) {
+        return null;
+    }
+
     const ogImgMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
                        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
     const imageUrl = ogImgMatch ? ogImgMatch[1] : 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1200&q=80';
