@@ -1347,9 +1347,12 @@
             if (!article) return;
             currentArticle = article;
 
+            const wordCount = (article.content || "").trim().split(/\s+/).filter(Boolean).length;
+            const readMins = Math.max(2, Math.ceil(wordCount / 130));
+
             document.getElementById("detail-image").src = article.image_url;
             document.getElementById("detail-category").textContent = article.category;
-            document.getElementById("detail-date").textContent = article.created_at;
+            document.getElementById("detail-date").textContent = `${article.created_at} • 📖 مقال كامل (${wordCount} كلمة • ${readMins} دقائق قراءة)`;
             document.getElementById("detail-views").textContent = `${article.views || 1} قراءة`;
             document.getElementById("detail-title").textContent = article.title;
             document.getElementById("detail-summary").textContent = article.summary;
@@ -1604,7 +1607,16 @@
             const statsBox = document.getElementById("md-content-stats");
             const infoBox = document.getElementById("md-content-info");
 
+            if (details.home_score !== undefined && details.home_score !== null) {
+                document.getElementById("md-home-score").textContent = details.home_score;
+            }
+            if (details.away_score !== undefined && details.away_score !== null) {
+                document.getElementById("md-away-score").textContent = details.away_score;
+            }
+
             const events = details.events || [];
+            const stats = details.stats || [];
+
             if (events.length === 0) {
                 eventsBox.innerHTML = `
                     <div class="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2">
@@ -1613,21 +1625,21 @@
                     </div>
                 `;
             } else {
-                eventsBox.innerHTML = events.map(ev => {
+                const eventsHtml = events.map(ev => {
                     const isHome = ev.team_side === 'home';
                     return `
-                        <div class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800/90">
+                        <div class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800/90 hover:border-emerald-500/30 transition">
                             <div class="flex-1 flex items-center gap-3 ${isHome ? '' : 'opacity-20 pointer-events-none'}">
                                 ${isHome ? `
-                                    <span class="text-lg">${ev.icon || '⚽'}</span>
+                                    <span class="text-lg shrink-0">${ev.icon || '⚽'}</span>
                                     <div>
                                         <p class="text-xs sm:text-sm font-extrabold text-white">${ev.player}</p>
-                                        <p class="text-[11px] text-emerald-400">${ev.type}${ev.assist ? ` (صناعة: ${ev.assist})` : ''}</p>
+                                        <p class="text-[11px] text-emerald-400 font-bold">${ev.type}${ev.assist ? ` (${ev.assist})` : ''}</p>
                                     </div>
                                 ` : ''}
                             </div>
 
-                            <div class="px-3 py-1 rounded-xl bg-slate-950 border border-emerald-500/30 text-emerald-400 font-black text-xs shrink-0">
+                            <div class="px-3 py-1 rounded-xl bg-slate-950 border border-emerald-500/30 text-emerald-400 font-black text-xs shrink-0" dir="ltr">
                                 ${ev.minute || '•'}
                             </div>
 
@@ -1635,17 +1647,46 @@
                                 ${!isHome ? `
                                     <div>
                                         <p class="text-xs sm:text-sm font-extrabold text-white">${ev.player}</p>
-                                        <p class="text-[11px] text-cyan-400">${ev.type}${ev.assist ? ` (${ev.assist})` : ''}</p>
+                                        <p class="text-[11px] text-cyan-400 font-bold">${ev.type}${ev.assist ? ` (${ev.assist})` : ''}</p>
                                     </div>
-                                    <span class="text-lg">${ev.icon || '⚽'}</span>
+                                    <span class="text-lg shrink-0">${ev.icon || '⚽'}</span>
                                 ` : ''}
                             </div>
                         </div>
                     `;
                 }).join("");
-            }
 
-            const stats = details.stats || [];
+                const quickStatsHtml = stats.length > 0 ? `
+                    <div class="mt-4 pt-4 border-t border-slate-800/80 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-emerald-400">📊 ملخص سريع لإحصائيات اللقاء</span>
+                            <button onclick="switchMatchModalTab('stats')" class="text-[11px] font-bold text-slate-400 hover:text-white transition">كل الإحصائيات ←</button>
+                        </div>
+                        ${stats.slice(0, 3).map(st => {
+                            const hNum = parseFloat(String(st.home).replace('%', '')) || 0;
+                            const aNum = parseFloat(String(st.away).replace('%', '')) || 0;
+                            const total = (hNum + aNum) || 1;
+                            const hPct = Math.round((hNum / total) * 100);
+                            const aPct = 100 - hPct;
+                            return `
+                                <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-1.5">
+                                    <div class="flex items-center justify-between text-[11px] font-extrabold">
+                                        <span class="text-emerald-400">${st.home}</span>
+                                        <span class="text-slate-300">${st.title}</span>
+                                        <span class="text-cyan-400">${st.away}</span>
+                                    </div>
+                                    <div class="w-full h-2 rounded-full bg-slate-950 overflow-hidden flex">
+                                        <div class="bg-emerald-500 h-full" style="width: ${hPct}%"></div>
+                                        <div class="bg-cyan-500 h-full" style="width: ${aPct}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join("")}
+                    </div>
+                ` : '';
+
+                eventsBox.innerHTML = eventsHtml + quickStatsHtml;
+            }
             if (stats.length === 0) {
                 statsBox.innerHTML = `
                     <div class="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
