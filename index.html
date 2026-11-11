@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>نبض الملاعب | الأخبار الرياضية ونتائج المباريات المباشرة</title>
+    <meta name="description" content="بوابة نبض الملاعب الرياضية - تغطية حصرية لأحدث أخبار كرة القدم العربية والعالمية، نتائج المباريات المباشرة، إحصائيات الفرق، وجداول البطولات على مدار الساعة." />
+    <meta name="robots" content="index, follow" />
+    <title>نبض الملاعب | بوابة الأخبار الرياضية ونتائج المباريات المباشرة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,17 +53,17 @@
             scrollbar-width: none;
         }
         .glass-card {
-            background: linear-gradient(145deg, rgba(17, 24, 39, 0.86), rgba(10, 15, 29, 0.92));
+            background: linear-gradient(145deg, rgba(17, 24, 39, 0.88), rgba(10, 15, 29, 0.94));
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.07);
         }
         .card-hover {
-            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .card-hover:hover {
-            transform: translateY(-5px);
+            transform: translateY(-4px);
             border-color: rgba(16, 185, 129, 0.45);
-            box-shadow: 0 22px 45px -18px rgba(16, 185, 129, 0.22);
+            box-shadow: 0 20px 40px -18px rgba(16, 185, 129, 0.22);
         }
         .live-glow {
             box-shadow: 0 0 18px rgba(239, 68, 68, 0.28);
@@ -70,8 +72,8 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-slate-950">
 
-    <!-- 1. شريط الأخبار العاجلة العلوي -->
-    <div class="bg-slate-950/90 border-b border-slate-800/80 text-xs py-2 px-4">
+    <!-- 1. شريط الأخبار العاجلة + روابط سريعة للصفحات القانونية (مهم لمراجعي AdSense) -->
+    <div class="bg-slate-950/95 border-b border-slate-800/80 text-xs py-2 px-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div class="flex items-center gap-3 overflow-hidden">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-red-500/15 text-red-400 border border-red-500/30 shrink-0">
@@ -83,91 +85,98 @@
                 </div>
             </div>
             <div class="hidden md:flex items-center gap-4 shrink-0 text-slate-400">
-                <span class="flex items-center gap-1.5 text-emerald-400 font-semibold">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    تحديث تلقائي كل 5 دقائق
-                </span>
+                <button onclick="openLegalPage('about')" class="hover:text-emerald-400 transition">من نحن</button>
                 <span>•</span>
-                <span id="current-date-display"></span>
+                <button onclick="openLegalPage('privacy')" class="hover:text-emerald-400 transition">سياسة الخصوصية</button>
+                <span>•</span>
+                <button onclick="openLegalPage('contact')" class="hover:text-emerald-400 transition">اتصل بنا</button>
+                <span>•</span>
+                <span id="current-date-display" class="text-slate-300 font-semibold"></span>
             </div>
         </div>
     </div>
 
-    <!-- 2. الهيدر الرئيسي والتنقل -->
-    <header class="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+    <!-- 2. الهيدر الرئيسي (يختفي تلقائياً عند النزول لأسفل لإعطاء مساحة كاملة للشاشة) -->
+    <header id="main-sticky-header" class="sticky top-0 z-40 bg-slate-950/92 backdrop-blur-xl border-b border-slate-800/80 transition-transform duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
             <!-- الشعار + روابط التنقل الرئيسية -->
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar">
                 <a href="#" onclick="switchMainTab('news'); return false;" class="flex items-center gap-3 group shrink-0">
-                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition">
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition">
                         <svg class="w-6 h-6 text-slate-950" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 0v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
                         </svg>
                     </div>
                     <div>
-                        <span class="text-xl sm:text-2xl font-black tracking-tight text-white">نبض<span class="text-emerald-400"> الملاعب</span></span>
-                        <p class="text-[11px] text-slate-400 hidden sm:block">الأخبار الرياضية والنتائج المباشرة</p>
+                        <span class="text-lg sm:text-2xl font-black tracking-tight text-white">نبض<span class="text-emerald-400"> الملاعب</span></span>
+                        <p class="text-[11px] text-slate-400 hidden md:block">بوابة الأخبار الرياضية والنتائج المباشرة</p>
                     </div>
                 </a>
 
-                <!-- أزرار التنقل بين الأخبار والمباريات -->
-                <nav class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-2xl border border-slate-800">
+                <!-- أزرار التنقل بين الأخبار والمباريات وترتيب الدوريات -->
+                <nav class="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-2xl border border-slate-800 shrink-0">
                     <button
                         id="nav-tab-news"
                         onclick="switchMainTab('news')"
-                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition bg-emerald-500 text-slate-950 shadow"
+                        class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition bg-emerald-500 text-slate-950 shadow"
                     >
-                        📰 الأخبار الرياضية
+                        📰 الأخبار
                     </button>
                     <button
                         id="nav-tab-matches"
                         onclick="switchMainTab('matches')"
-                        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white flex items-center gap-2"
+                        class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white flex items-center gap-1.5"
                     >
-                        <span>⚽ جدول المباريات</span>
-                        <span id="live-matches-badge" class="px-1.5 py-0.5 text-[10px] rounded-full bg-red-500/20 text-red-400 border border-red-500/30">مباشر</span>
+                        <span>⚽ المباريات</span>
+                        <span id="live-matches-badge" class="px-2 py-0.5 text-[10px] rounded-full bg-red-500/20 text-red-400 border border-red-500/30">مباشر</span>
+                    </button>
+                    <button
+                        id="nav-tab-standings"
+                        onclick="switchMainTab('standings')"
+                        class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white flex items-center gap-1.5"
+                    >
+                        <span>🏆 ترتيب الدوريات</span>
                     </button>
                 </nav>
             </div>
 
             <!-- شريط البحث الفوري -->
-            <div class="flex-1 max-w-md hidden sm:block">
+            <div class="flex-1 max-w-xs lg:max-w-md hidden md:block">
                 <div class="relative">
                     <input
                         id="search-input"
                         type="text"
                         placeholder="ابحث عن نادٍ، لاعب، بطولة، أو خبر..."
-                        class="w-full bg-slate-900/95 border border-slate-800 focus:border-emerald-500 rounded-2xl py-2.5 pr-10 pl-4 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition"
+                        class="w-full bg-slate-900/95 border border-slate-800 focus:border-emerald-500 rounded-2xl py-2 pr-10 pl-4 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition"
                         oninput="handleSearch(this.value)"
                     />
-                    <svg class="w-4 h-4 text-slate-400 absolute right-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-slate-400 absolute right-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                 </div>
             </div>
         </div>
+    </header>
 
-        <!-- 3. شريط نتائج المباريات السريع (Top Scoreboard Strip) -->
-        <div class="border-t border-slate-800/70 bg-slate-950/90 py-2.5">
+    <!-- 3. شريط نتائج المباريات السريع + شريط التصنيفات (غير مثبتة حتى تختفي تماماً عند النزول لأسفل وتبقى الشاشة كاملة للموقع) -->
+    <div id="top-bars-container" class="border-b border-slate-800/70 bg-slate-950/90">
+        <div class="py-2.5 border-b border-slate-800/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-3">
                 <button
                     onclick="switchMainTab('matches')"
-                    class="shrink-0 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-extrabold text-emerald-400 flex items-center gap-1.5 transition"
+                    class="shrink-0 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-xs font-extrabold text-emerald-400 flex items-center gap-1.5 transition"
                 >
-                    <span>كل المباريات</span>
+                    <span>جدول اليوم</span>
                     <span>←</span>
                 </button>
-                <div id="top-matches-strip" class="flex items-center gap-3 overflow-x-auto no-scrollbar py-0.5 flex-1">
-                    <!-- يتم ملء بطاقات المباريات المصغرة هنا -->
-                </div>
+                <div id="top-matches-strip" class="flex items-center gap-3 overflow-x-auto no-scrollbar py-0.5 flex-1"></div>
             </div>
         </div>
 
-        <!-- 4. شريط التصنيفات الرياضية -->
-        <div id="categories-bar-wrapper" class="border-t border-slate-800/60 bg-slate-900/40">
+        <div id="categories-bar-wrapper" class="bg-slate-900/40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar" id="categories-bar"></div>
         </div>
-    </header>
+    </div>
 
     <!-- المحتوى الرئيسي -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -175,29 +184,26 @@
         <!-- ==================== أ. واجهة الأخبار الرئيسية (HOME NEWS VIEW) ==================== -->
         <section id="home-view" class="space-y-10">
 
-            <!-- 1. شبكة الأخبار البارزة الثلاثية (Bento Hero Grid: 1 Main + 2 Side) -->
+            <!-- 1. شبكة الأخبار البارزة الثلاثية (Bento Hero Grid) -->
             <div id="bento-hero-container"></div>
 
-            <!-- 2. القسم الرئيسي للأخبار + الشريط الجانبي (الأكثر قراءة + مباريات سريعة) -->
+            <!-- 2. القسم الرئيسي للأخبار + الشريط الجانبي -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                 <!-- عمود الأخبار الرئيسي (8 أعمدة) -->
                 <div class="lg:col-span-8 space-y-6">
-                    <!-- شريط التحكم بطريقة العرض -->
                     <div class="flex flex-wrap items-center justify-between gap-4 glass-card px-5 py-4 rounded-2xl">
                         <div class="flex items-center gap-3">
                             <span class="w-1.5 h-6 rounded-full bg-gradient-to-b from-emerald-400 to-cyan-500"></span>
-                            <h2 class="text-lg sm:text-xl font-extrabold text-white">أحدث التغطيات الإخبارية</h2>
+                            <h2 id="current-category-heading" class="text-lg sm:text-xl font-extrabold text-white">أحدث التغطيات الإخبارية</h2>
                             <span id="articles-count-badge" class="px-2.5 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold"></span>
                         </div>
 
-                        <!-- أزرار تبديل طريقة عرض الأخبار (شبكة / قائمة مفصلة) -->
                         <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
                             <button
                                 id="view-btn-grid"
                                 onclick="setNewsLayout('grid')"
                                 class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-slate-950"
-                                title="عرض البطاقات الشبكي"
                             >
                                 ⊞ شبكة
                             </button>
@@ -205,19 +211,41 @@
                                 id="view-btn-list"
                                 onclick="setNewsLayout('list')"
                                 class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white"
-                                title="عرض المجلة المفصل"
                             >
                                 ☰ قائمة مفصلة
                             </button>
                         </div>
                     </div>
 
-                    <!-- حاوية الأخبار -->
                     <div id="articles-container" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
                 </div>
 
-                <!-- العمود الجانبي: الأكثر قراءة اليوم + أبرز المباريات (4 أعمدة) -->
+                <!-- العمود الجانبي (4 أعمدة) -->
                 <aside class="lg:col-span-4 space-y-6">
+                    <!-- ودجت أبرز مباريات اليوم الجانبي -->
+                    <div class="glass-card rounded-3xl p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                                <span>⚽</span>
+                                نتائج ومباريات اليوم
+                            </h3>
+                            <button onclick="switchMainTab('matches')" class="text-xs font-bold text-emerald-400 hover:underline">كل المباريات ←</button>
+                        </div>
+                        <div id="sidebar-matches-widget" class="space-y-3"></div>
+                    </div>
+
+                    <!-- ودجت ترتيب الدوريات السريع في القائمة الجانبية -->
+                    <div class="glass-card rounded-3xl p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                                <span>🏆</span>
+                                صدارة الدوريات
+                            </h3>
+                            <button onclick="switchMainTab('standings')" class="text-xs font-bold text-emerald-400 hover:underline">الجدول الكامل ←</button>
+                        </div>
+                        <div id="sidebar-standings-widget" class="space-y-2.5"></div>
+                    </div>
+
                     <!-- ودجت الأكثر قراءة اليوم -->
                     <div class="glass-card rounded-3xl p-6 space-y-5">
                         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -229,38 +257,26 @@
                         </div>
                         <div id="trending-sidebar-list" class="space-y-4"></div>
                     </div>
-
-                    <!-- ودجت أبرز مباريات اليوم الجانبي -->
-                    <div class="glass-card rounded-3xl p-6 space-y-4">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 class="text-base font-extrabold text-white flex items-center gap-2">
-                                <span>⚽</span>
-                                نتائج ومباريات اليوم
-                            </h3>
-                            <button onclick="switchMainTab('matches')" class="text-xs font-bold text-emerald-400 hover:underline">عرض الكل</button>
-                        </div>
-                        <div id="sidebar-matches-widget" class="space-y-3"></div>
-                    </div>
                 </aside>
             </div>
         </section>
 
-        <!-- ==================== ب. واجهة جدول المباريات الكاملة (MATCHES CENTER VIEW) ==================== -->
-        <section id="matches-view" class="hidden space-y-8">
-            <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <!-- ==================== ب. واجهة جدول المباريات المقسم حسب البطولات (MATCHES CENTER VIEW) ==================== -->
+        <section id="matches-view" class="hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
                 <div>
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold mb-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                        تحديث حي للنتائج
+                        مركز النتائج والتغطية الحية
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-white">مركز المباريات والنتائج المباشرة</h1>
-                    <p class="text-xs sm:text-sm text-slate-400 mt-1">متابعة لحظية لنتائج مباريات اليوم في البطولات العربية والأوروبية والعالمية</p>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white">جدول مباريات اليوم والنتائج المباشرة</h1>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">اضغط على أي مباراة لاستعراض الأحداث، مسجلي الأهداف، الإحصائيات، والقنوات الناقلة</p>
                 </div>
 
                 <!-- فلاتر حالة المباراة -->
                 <div class="flex flex-wrap items-center gap-2 bg-slate-950/90 p-1.5 rounded-2xl border border-slate-800">
                     <button onclick="filterMatches('all')" id="mfilter-all" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition">
-                        الكل
+                        جميع المباريات
                     </button>
                     <button onclick="filterMatches('live')" id="mfilter-live" class="px-4 py-2 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
@@ -270,13 +286,57 @@
                         انتهت
                     </button>
                     <button onclick="filterMatches('upcoming')" id="mfilter-upcoming" class="px-4 py-2 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition">
-                        لم تبدأ
+                        قادمة
                     </button>
                 </div>
             </div>
 
-            <!-- شبكة بطاقات المباريات -->
-            <div id="matches-full-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            <!-- حاوية البطولات ومبارياتها مرتبة مثل المواقع الرياضية الكبرى -->
+            <div id="matches-grouped-container" class="space-y-6"></div>
+        </section>
+
+        <!-- ==================== ب-2. واجهة جدول ترتيب الدوريات (STANDINGS VIEW) ==================== -->
+        <section id="standings-view" class="hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold mb-2">
+                            <span>🏆</span>
+                            <span>ترتيب الفرق والنقاط المحدث</span>
+                        </div>
+                        <h1 id="standings-league-title" class="text-2xl sm:text-3xl font-black text-white">جدول ترتيب الدوري الإنجليزي الممتاز</h1>
+                    </div>
+                </div>
+
+                <!-- أزرار اختيار الدوري -->
+                <div id="standings-leagues-bar" class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-slate-800/80">
+                    <!-- يتم توليد أزرار الدوريات ديناميكياً -->
+                </div>
+            </div>
+
+            <!-- جدول الترتيب الكامل -->
+            <div class="glass-card rounded-3xl overflow-hidden border border-slate-800/90 shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/95 border-b border-slate-800 text-[11px] sm:text-xs font-extrabold text-slate-400">
+                                <th class="py-4 px-4 w-12 text-center">#</th>
+                                <th class="py-4 px-4">الفريق</th>
+                                <th class="py-4 px-3 text-center">لعب</th>
+                                <th class="py-4 px-3 text-center text-emerald-400">فاز</th>
+                                <th class="py-4 px-3 text-center text-amber-400">تعادل</th>
+                                <th class="py-4 px-3 text-center text-red-400">خسر</th>
+                                <th class="py-4 px-3 text-center hidden sm:table-cell">له : عليه</th>
+                                <th class="py-4 px-3 text-center">فارق</th>
+                                <th class="py-4 px-5 text-center text-white">النقاط</th>
+                            </tr>
+                        </thead>
+                        <tbody id="standings-table-body" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+                            <!-- يتم ملؤها عبر JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </section>
 
         <!-- ==================== ج. واجهة قراءة الخبر كاملاً (ARTICLE DETAIL VIEW) ==================== -->
@@ -311,22 +371,18 @@
                     <div class="p-6 sm:p-10 space-y-6">
                         <h1 id="detail-title" class="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-snug"></h1>
 
-                        <!-- صندوق الملخص السريع -->
                         <div class="p-5 rounded-2xl bg-gradient-to-l from-emerald-500/10 via-slate-900/90 to-slate-900 border-r-4 border-emerald-400">
                             <div class="text-xs font-extrabold text-emerald-400 mb-1.5">📌 خلاصة التقرير</div>
                             <p id="detail-summary" class="text-slate-200 text-sm sm:text-base leading-relaxed font-medium"></p>
                         </div>
 
-                        <!-- نص الخبر -->
                         <div id="detail-content" class="space-y-4 text-slate-200 text-base sm:text-lg leading-loose"></div>
 
-                        <!-- الوسوم -->
                         <div class="pt-6 border-t border-slate-800/80">
                             <h4 class="text-xs font-bold text-slate-400 mb-3">الكلمات المفتاحية والمواضيع المرتبطة:</h4>
                             <div id="detail-tags" class="flex flex-wrap gap-2"></div>
                         </div>
 
-                        <!-- أزرار المشاركة على منصات التواصل الاجتماعي -->
                         <div class="pt-6 border-t border-slate-800/80">
                             <div class="p-5 rounded-2xl bg-slate-950/90 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div>
@@ -357,24 +413,103 @@
             </div>
         </section>
 
+        <!-- ==================== د. الصفحات القانونية المطلوبة لقبول Google AdSense ==================== -->
+        <section id="legal-view" class="hidden">
+            <div class="mb-6 flex items-center justify-between flex-wrap gap-4">
+                <button
+                    onclick="switchMainTab('news')"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs sm:text-sm font-bold transition"
+                >
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    العودة إلى الصفحة الرئيسية
+                </button>
+
+                <!-- أزرار التنقل بين الصفحات القانونية -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openLegalPage('privacy')" id="legal-tab-privacy" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition">سياسة الخصوصية</button>
+                    <button onclick="openLegalPage('about')" id="legal-tab-about" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-slate-800 transition">من نحن</button>
+                    <button onclick="openLegalPage('terms')" id="legal-tab-terms" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-slate-800 transition">شروط الاستخدام</button>
+                    <button onclick="openLegalPage('contact')" id="legal-tab-contact" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-slate-800 transition">اتصل بنا</button>
+                </div>
+            </div>
+
+            <div id="legal-content-box" class="glass-card rounded-3xl p-6 sm:p-10 border border-slate-800 max-w-4xl mx-auto space-y-6 text-slate-200 leading-loose">
+                <!-- يتم ملؤها حسب الصفحة المختارة -->
+            </div>
+        </section>
+
     </main>
 
-    <!-- الفوتر -->
-    <footer class="border-t border-slate-800/80 bg-slate-950/90 mt-16 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-            <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                <span class="font-bold text-white">نبض الملاعب</span>
-                <span>— تغطية إخبارية رياضية ونتائج مباشرة على مدار الساعة</span>
+    <!-- الفوتر الشامل المتوافق مع معايير Google AdSense -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 mt-16 pt-12 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- عن الموقع -->
+                <div class="md:col-span-2 space-y-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-slate-950 font-black">⚽</div>
+                        <span class="text-xl font-black text-white">نبض <span class="text-emerald-400">الملاعب</span></span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-lg">
+                        بوابة إعلامية رياضية عربية متكاملة تقدم تغطية لحظية لأحدث أخبار كرة القدم المحلية والعالمية، نتائج المباريات المباشرة، إحصائيات الفرق واللاعبين، والتقارير التحليلية على مدار الساعة وفق أعلى معايير المصداقية الصحفية.
+                    </p>
+                </div>
+
+                <!-- أقسام الموقع -->
+                <div class="space-y-3">
+                    <h4 class="text-sm font-extrabold text-white">أقسام الموقع</h4>
+                    <ul class="space-y-2 text-xs text-slate-400">
+                        <li><button onclick="selectCategory('الكل')" class="hover:text-emerald-400 transition">الأخبار الرياضية العاجلة</button></li>
+                        <li><button onclick="switchMainTab('matches')" class="hover:text-emerald-400 transition">جدول المباريات والنتائج المباشرة</button></li>
+                        <li><button onclick="selectCategory('الدوري الإنجليزي الممتاز')" class="hover:text-emerald-400 transition">الدوري الإنجليزي الممتاز</button></li>
+                        <li><button onclick="selectCategory('الدوري الإسباني')" class="hover:text-emerald-400 transition">الدوري الإسباني</button></li>
+                        <li><button onclick="selectCategory('دوري روشن السعودي')" class="hover:text-emerald-400 transition">دوري روشن السعودي</button></li>
+                    </ul>
+                </div>
+
+                <!-- روابط هامة وسياسات الموقع (شرط أساسي لـ AdSense) -->
+                <div class="space-y-3">
+                    <h4 class="text-sm font-extrabold text-white">معلومات قانونية وتواصل</h4>
+                    <ul class="space-y-2 text-xs text-slate-400">
+                        <li><button onclick="openLegalPage('about')" class="hover:text-emerald-400 transition">من نحن (فريق التحرير)</button></li>
+                        <li><button onclick="openLegalPage('privacy')" class="hover:text-emerald-400 transition">سياسة الخصوصية وملفات الارتباط</button></li>
+                        <li><button onclick="openLegalPage('terms')" class="hover:text-emerald-400 transition">اتفاقية وشروط الاستخدام</button></li>
+                        <li><button onclick="openLegalPage('contact')" class="hover:text-emerald-400 transition">اتصل بنا والإعلانات</button></li>
+                        <li><a href="/sitemap.xml" target="_blank" class="hover:text-emerald-400 transition">خريطة الموقع (Sitemap)</a></li>
+                    </ul>
+                </div>
             </div>
-            <div>جميع الحقوق محفوظة © نبض الملاعب</div>
+
+            <div class="border-t border-slate-800/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+                <div>جميع الحقوق محفوظة © 2026 بوابة نبض الملاعب الرياضية.</div>
+                <div class="flex items-center gap-4">
+                    <button onclick="openLegalPage('privacy')" class="hover:text-slate-300">الخصوصية</button>
+                    <button onclick="openLegalPage('terms')" class="hover:text-slate-300">الشروط</button>
+                    <button onclick="openLegalPage('contact')" class="hover:text-slate-300">تواصل معنا</button>
+                </div>
+            </div>
         </div>
     </footer>
+
+    <!-- شريط الموافقة على ملفات تعريف الارتباط (GDPR / AdSense Cookie Consent Banner) -->
+    <div id="cookie-consent-banner" class="fixed bottom-4 inset-x-4 z-50 hidden max-w-4xl mx-auto glass-card rounded-2xl p-4 sm:p-5 border border-emerald-500/30 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="text-xs text-slate-300 leading-relaxed">
+            🍪 <strong class="text-white">إشعار ملفات تعريف الارتباط (Cookies):</strong>
+            نحن نستخدم ملفات تعريف الارتباط وتقنيات Google AdSense لتحسين تجربة التصفح وتقديم محتوى رياضي وإعلانات مخصصة تناسب اهتماماتك. باستمرارك في تصفح الموقع فإنك توافق على
+            <button onclick="openLegalPage('privacy')" class="text-emerald-400 font-bold underline">سياسة الخصوصية</button>.
+        </div>
+        <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+            <button onclick="acceptCookies()" class="flex-1 sm:flex-initial px-5 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+                موافق وأفهم ذلك
+            </button>
+        </div>
+    </div>
 
     <!-- ==================== نافذة بيانات وتفاصيل المباراة الكاملة (MATCH DETAILS MODAL) ==================== -->
     <div id="match-detail-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
         <div class="glass-card max-w-3xl w-full rounded-3xl border border-slate-700/80 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <!-- هيدر النافذة -->
             <div class="px-6 py-4 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
@@ -383,10 +518,8 @@
                 <button onclick="closeMatchDetails()" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center text-lg font-bold transition">&times;</button>
             </div>
 
-            <!-- لوحة النتيجة الرئيسية (Scoreboard Header) -->
             <div class="p-6 sm:p-8 bg-gradient-to-b from-slate-900/90 to-slate-950/90 border-b border-slate-800/80">
                 <div class="grid grid-cols-3 items-center text-center gap-4">
-                    <!-- الفريق المضيف -->
                     <div class="flex flex-col items-center gap-2.5">
                         <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-900 border border-slate-800 p-3 flex items-center justify-center shadow-lg">
                             <img id="md-home-logo" src="" alt="" class="w-12 h-12 sm:w-14 sm:h-14 object-contain" />
@@ -394,7 +527,6 @@
                         <h3 id="md-home-name" class="text-sm sm:text-lg font-black text-white"></h3>
                     </div>
 
-                    <!-- النتيجة وحالة اللقاء -->
                     <div class="flex flex-col items-center justify-center">
                         <span id="md-status-badge" class="px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 mb-2"></span>
                         <div class="px-5 py-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-2xl sm:text-4xl font-black text-emerald-400 tracking-widest shadow-inner">
@@ -405,7 +537,6 @@
                         <span id="md-clock" class="text-xs text-slate-400 mt-2 font-semibold"></span>
                     </div>
 
-                    <!-- الفريق الضيف -->
                     <div class="flex flex-col items-center gap-2.5">
                         <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-900 border border-slate-800 p-3 flex items-center justify-center shadow-lg">
                             <img id="md-away-logo" src="" alt="" class="w-12 h-12 sm:w-14 sm:h-14 object-contain" />
@@ -414,7 +545,6 @@
                     </div>
                 </div>
 
-                <!-- شريط تبويبات تفاصيل المباراة -->
                 <div class="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-slate-800/70">
                     <button onclick="switchMatchModalTab('events')" id="md-tab-events" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition">
                         ⚡ أحداث المباراة
@@ -428,15 +558,9 @@
                 </div>
             </div>
 
-            <!-- محتوى التبويبات القابل للتمرير -->
             <div class="p-6 overflow-y-auto flex-1 space-y-6">
-                <!-- 1. تبويب أحداث المباراة -->
                 <div id="md-content-events" class="space-y-3"></div>
-
-                <!-- 2. تبويب إحصائيات الفريقين -->
                 <div id="md-content-stats" class="hidden space-y-4"></div>
-
-                <!-- 3. تبويب معلومات المباراة (الملعب، القناة، المعلق، وتصويت الجمهور) -->
                 <div id="md-content-info" class="hidden space-y-5"></div>
             </div>
         </div>
@@ -444,24 +568,43 @@
 
     <!-- ==================== منطق التطبيق ==================== -->
     <script>
-        const BASE_CATEGORIES = [
-            "الكل",
-            "دوري أبطال أوروبا",
-            "الدوري الإنجليزي",
-            "الدوري الإسباني",
-            "الدوري الألماني",
-            "دوري روشن السعودي",
-            "الدوري المصري"
+        // التصنيفات الرئيسية المنظمة مع أيقوناتها
+        const ORDERED_CATEGORIES = [
+            { name: "الكل", icon: "🌐" },
+            { name: "كرة قدم عالمية", icon: "⚽" },
+            { name: "دوري أبطال أوروبا", icon: "🏆" },
+            { name: "الدوري الإنجليزي الممتاز", icon: "🦁" },
+            { name: "الدوري الإسباني", icon: "🇪🇸" },
+            { name: "الدوري الألماني", icon: "🇩🇪" },
+            { name: "الدوري الإيطالي", icon: "🇮🇹" },
+            { name: "الدوري الفرنسي", icon: "🇫🇷" },
+            { name: "دوري روشن السعودي", icon: "🇸🇦" },
+            { name: "الدوري المصري", icon: "🇪🇬" },
+            { name: "المنتخبات الدولية", icon: "🌍" }
+        ];
+
+        const STANDINGS_LEAGUES = [
+            { key: "epl", name: "الدوري الإنجليزي", icon: "🦁" },
+            { key: "laliga", name: "الدوري الإسباني", icon: "🇪🇸" },
+            { key: "saudi", name: "دوري روشن السعودي", icon: "🇸🇦" },
+            { key: "egypt", name: "الدوري المصري", icon: "🇪🇬" },
+            { key: "ucl", name: "أبطال أوروبا", icon: "🏆" },
+            { key: "seriea", name: "الدوري الإيطالي", icon: "🇮🇹" },
+            { key: "bundesliga", name: "الدوري الألماني", icon: "🇩🇪" },
+            { key: "ligue1", name: "الدوري الفرنسي", icon: "🇫🇷" },
+            { key: "morocco", name: "الدوري المغربي", icon: "🇲🇦" }
         ];
 
         let allArticles = [];
         let allMatches = [];
         let activeCategory = "الكل";
+        let activeStandingsLeague = "epl";
         let searchQuery = "";
-        let newsLayout = "grid"; // 'grid' | 'list'
-        let matchFilter = "all"; // 'all' | 'live' | 'finished' | 'upcoming'
+        let newsLayout = "grid";
+        let matchFilter = "all";
         let currentArticle = null;
         let tickerIndex = 0;
+        let lastScrollY = 0;
 
         document.addEventListener("DOMContentLoaded", async () => {
             const now = new Date();
@@ -469,17 +612,40 @@
                 weekday: "long", year: "numeric", month: "long", day: "numeric"
             });
 
+            if (!localStorage.getItem("COOKIE_CONSENT_ACCEPTED")) {
+                document.getElementById("cookie-consent-banner").classList.remove("hidden");
+            }
+
+            // إخفاء الهيدر تلقائياً عند التمرير لأسفل وإظهاره عند الصعود لأعلى لتبقى الشاشة كاملة
+            const stickyHeader = document.getElementById("main-sticky-header");
+            window.addEventListener("scroll", () => {
+                const currentY = window.scrollY;
+                if (currentY > 140 && currentY > lastScrollY) {
+                    stickyHeader.style.transform = "translateY(-100%)";
+                } else {
+                    stickyHeader.style.transform = "translateY(0)";
+                }
+                lastScrollY = currentY;
+            }, { passive: true });
+
+            renderStandingsLeaguesBar();
+
             await Promise.all([
                 loadArticlesFromServer(),
-                loadMatchesFromServer()
+                loadMatchesFromServer(),
+                loadStandingsFromServer("epl")
             ]);
 
             startBreakingTicker();
 
-            // تحديث تلقائي صامت في الخلفية للأخبار والمباريات المباشرة
             setInterval(loadArticlesFromServer, 60 * 1000);
             setInterval(loadMatchesFromServer, 45 * 1000);
         });
+
+        function acceptCookies() {
+            localStorage.setItem("COOKIE_CONSENT_ACCEPTED", "true");
+            document.getElementById("cookie-consent-banner").classList.add("hidden");
+        }
 
         async function loadArticlesFromServer() {
             try {
@@ -505,14 +671,14 @@
                     allMatches = data.matches || [];
                     renderTopMatchesStrip();
                     renderSidebarMatches();
-                    renderFullMatchesGrid();
+                    renderGroupedMatchesView();
                 }
             } catch (e) {
                 console.error("Failed to fetch matches:", e);
             }
         }
 
-        // عرض شريط المباريات الأفقي العلوي
+        // 1. شريط المباريات العلوي
         function renderTopMatchesStrip() {
             const strip = document.getElementById("top-matches-strip");
             const liveCount = allMatches.filter(m => m.state === 'live').length;
@@ -522,37 +688,36 @@
             }
 
             if (allMatches.length === 0) {
-                strip.innerHTML = `<span class="text-xs text-slate-400">جاري تحميل جدول مباريات اليوم...</span>`;
+                strip.innerHTML = `<span class="text-xs text-slate-400">جاري تحديث جدول مباريات اليوم...</span>`;
                 return;
             }
 
-            strip.innerHTML = allMatches.slice(0, 12).map(m => {
+            strip.innerHTML = allMatches.slice(0, 14).map(m => {
                 const isLive = m.state === 'live';
                 return `
                     <div
                         onclick="openMatchDetails('${m.id}')"
-                        class="cursor-pointer shrink-0 w-60 rounded-xl px-3 py-2 bg-slate-900/95 hover:bg-slate-800/90 border ${
+                        class="cursor-pointer shrink-0 w-64 rounded-xl px-3.5 py-2 bg-slate-900/95 hover:bg-slate-800/90 border ${
                             isLive ? 'border-red-500/40 live-glow' : 'border-slate-800'
                         } transition flex flex-col justify-between gap-1.5"
-                        title="اضغط لعرض أحداث وإحصائيات المباراة"
                     >
                         <div class="flex items-center justify-between text-[10px]">
-                            <span class="text-slate-400 truncate max-w-[120px]">${m.competition}</span>
+                            <span class="text-slate-400 font-semibold truncate max-w-[135px]">${m.competition}</span>
                             <span class="px-1.5 py-0.5 rounded font-bold ${
                                 isLive ? 'bg-red-500/20 text-red-400 animate-pulse' : 'bg-slate-800 text-slate-300'
                             }">
-                                ${isLive ? `🔴 ${m.clock || m.status_text}` : m.status_text}
+                                ${isLive ? `🔴 ${m.clock || 'مباشر'}` : (m.clock || m.status_text)}
                             </span>
                         </div>
                         <div class="flex items-center justify-between text-xs font-bold text-white">
-                            <div class="flex items-center gap-1.5 truncate max-w-[90px]">
+                            <div class="flex items-center gap-1.5 truncate max-w-[95px]">
                                 ${m.home_logo ? `<img src="${m.home_logo}" class="w-4 h-4 object-contain shrink-0" alt="" />` : ''}
                                 <span class="truncate">${m.home_team}</span>
                             </div>
-                            <div class="px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 font-black text-xs shrink-0">
+                            <div class="px-2 py-0.5 rounded-lg bg-slate-950 text-emerald-400 font-black text-xs shrink-0 border border-slate-800">
                                 ${m.home_score} - ${m.away_score}
                             </div>
-                            <div class="flex items-center gap-1.5 truncate max-w-[90px] justify-end">
+                            <div class="flex items-center gap-1.5 truncate max-w-[95px] justify-end">
                                 <span class="truncate">${m.away_team}</span>
                                 ${m.away_logo ? `<img src="${m.away_logo}" class="w-4 h-4 object-contain shrink-0" alt="" />` : ''}
                             </div>
@@ -562,16 +727,17 @@
             }).join("");
         }
 
+        // 2. ودجت المباريات الجانبي
         function renderSidebarMatches() {
             const box = document.getElementById("sidebar-matches-widget");
             if (!box) return;
-            box.innerHTML = allMatches.slice(0, 5).map(m => {
+            box.innerHTML = allMatches.slice(0, 6).map(m => {
                 const isLive = m.state === 'live';
                 return `
-                    <div onclick="openMatchDetails('${m.id}')" class="cursor-pointer p-3 rounded-2xl bg-slate-950/70 hover:bg-slate-900 border border-slate-800/80 transition space-y-2" title="اضغط لعرض بيانات المباراة">
+                    <div onclick="openMatchDetails('${m.id}')" class="cursor-pointer p-3 rounded-2xl bg-slate-950/75 hover:bg-slate-900 border border-slate-800/80 transition space-y-2">
                         <div class="flex items-center justify-between text-[10px] text-slate-400">
-                            <span>${m.competition}</span>
-                            <span class="${isLive ? 'text-red-400 font-bold' : 'text-emerald-400'}">${isLive ? `🔴 ${m.clock || 'مباشر'}` : m.status_text}</span>
+                            <span class="font-semibold">${m.competition}</span>
+                            <span class="${isLive ? 'text-red-400 font-bold' : 'text-emerald-400'}">${isLive ? `🔴 ${m.clock || 'مباشر'}` : (m.clock || m.status_text)}</span>
                         </div>
                         <div class="flex items-center justify-between text-xs font-bold text-white">
                             <div class="flex items-center gap-2 truncate w-2/5">
@@ -596,81 +762,161 @@
             ['all', 'live', 'finished', 'upcoming'].forEach(t => {
                 const btn = document.getElementById(`mfilter-${t}`);
                 if (!btn) return;
-                if (t === type) {
-                    btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition";
-                } else {
-                    btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition";
-                }
+                btn.className = (t === type)
+                    ? "px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition"
+                    : "px-4 py-2 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition";
             });
-            renderFullMatchesGrid();
+            renderGroupedMatchesView();
         }
 
-        function renderFullMatchesGrid() {
-            const grid = document.getElementById("matches-full-grid");
-            if (!grid) return;
+        // 3. عرض المباريات مجمعة حسب البطولة (Grouped by Championship)
+        function renderGroupedMatchesView() {
+            const container = document.getElementById("matches-grouped-container");
+            if (!container) return;
 
             const filtered = allMatches.filter(m => matchFilter === 'all' || m.state === matchFilter);
             if (filtered.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full glass-card rounded-3xl p-12 text-center">
-                        <p class="text-base font-bold text-slate-300">لا توجد مباريات في هذا التصنيف حالياً</p>
+                container.innerHTML = `
+                    <div class="glass-card rounded-3xl p-12 text-center">
+                        <p class="text-base font-bold text-slate-300">لا توجد مباريات مطابقة لهذا الفلتر حالياً</p>
                     </div>
                 `;
                 return;
             }
 
-            grid.innerHTML = filtered.map(m => {
-                const isLive = m.state === 'live';
-                return `
-                    <div onclick="openMatchDetails('${m.id}')" class="cursor-pointer glass-card rounded-3xl p-5 border ${isLive ? 'border-red-500/40 live-glow' : 'border-slate-800'} card-hover flex flex-col justify-between gap-4">
-                        <div class="flex items-center justify-between text-xs border-b border-slate-800/80 pb-3">
-                            <span class="font-bold text-slate-300">${m.competition}</span>
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${
-                                isLive
-                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse'
-                                    : (m.state === 'finished' ? 'bg-slate-800 text-slate-300' : 'bg-emerald-500/15 text-emerald-400')
-                            }">
-                                ${isLive ? `🔴 مباشر ${m.clock}` : (m.clock || m.status_text)}
-                            </span>
-                        </div>
+            // تجميع المباريات حسب البطولة
+            const groups = {};
+            for (const m of filtered) {
+                const compName = m.competition || 'مباريات اليوم';
+                if (!groups[compName]) {
+                    groups[compName] = {
+                        name: compName,
+                        logo: m.competition_logo || '',
+                        items: []
+                    };
+                }
+                groups[compName].items.push(m);
+            }
 
-                        <div class="grid grid-cols-3 items-center text-center py-2">
-                            <!-- الفريق الأول -->
-                            <div class="flex flex-col items-center gap-2">
-                                <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center p-2">
-                                    ${m.home_logo
-                                        ? `<img src="${m.home_logo}" class="w-10 h-10 object-contain" alt="${m.home_team}" />`
-                                        : `<span class="text-lg font-black text-emerald-400">${m.home_team.slice(0, 2)}</span>`
-                                    }
-                                </div>
-                                <span class="text-xs sm:text-sm font-extrabold text-white line-clamp-1">${m.home_team}</span>
+            container.innerHTML = Object.values(groups).map(group => `
+                <div class="glass-card rounded-3xl overflow-hidden border border-slate-800/90 shadow-xl">
+                    <!-- هيدر البطولة -->
+                    <div class="px-6 py-4 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center p-1">
+                                ${group.logo
+                                    ? `<img src="${group.logo}" class="w-6 h-6 object-contain" alt="" />`
+                                    : `<span class="text-sm">🏆</span>`
+                                }
                             </div>
-
-                            <!-- النتيجة -->
-                            <div class="flex flex-col items-center justify-center">
-                                <div class="px-4 py-2 rounded-2xl bg-slate-950 border border-slate-800 text-xl sm:text-2xl font-black text-emerald-400 tracking-wider">
-                                    ${m.home_score} : ${m.away_score}
-                                </div>
-                                <span class="text-[11px] text-slate-400 mt-1.5">${m.status_text}</span>
-                            </div>
-
-                            <!-- الفريق الثاني -->
-                            <div class="flex flex-col items-center gap-2">
-                                <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center p-2">
-                                    ${m.away_logo
-                                        ? `<img src="${m.away_logo}" class="w-10 h-10 object-contain" alt="${m.away_team}" />`
-                                        : `<span class="text-lg font-black text-cyan-400">${m.away_team.slice(0, 2)}</span>`
-                                    }
-                                </div>
-                                <span class="text-xs sm:text-sm font-extrabold text-white line-clamp-1">${m.away_team}</span>
-                            </div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-white">${group.name}</h3>
                         </div>
-
-                        <div class="pt-3 border-t border-slate-800/70 flex items-center justify-between text-[11px] text-slate-400">
-                            <span class="text-emerald-400 font-bold">عرض أحداث وإحصائيات المباراة ←</span>
-                            <span>📊 تفاصيل اللقاء</span>
-                        </div>
+                        <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-slate-950 text-emerald-400 border border-slate-800">
+                            ${group.items.length} مباريات
+                        </span>
                     </div>
+
+                    <!-- قائمة مباريات البطولة -->
+                    <div class="divide-y divide-slate-800/60">
+                        ${group.items.map(m => {
+                            const isLive = m.state === 'live';
+                            return `
+                                <div
+                                    onclick="openMatchDetails('${m.id}')"
+                                    class="cursor-pointer px-4 sm:px-6 py-4 hover:bg-slate-900/60 transition grid grid-cols-12 items-center gap-3"
+                                >
+                                    <!-- حالة أو وقت المباراة -->
+                                    <div class="col-span-12 sm:col-span-2 flex sm:flex-col items-center sm:items-start justify-between gap-1">
+                                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold ${
+                                            isLive
+                                                ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse'
+                                                : (m.state === 'finished' ? 'bg-slate-800 text-slate-300' : 'bg-emerald-500/15 text-emerald-400')
+                                        }">
+                                            ${isLive ? `🔴 مباشر ${m.clock}` : (m.clock || m.status_text)}
+                                        </span>
+                                    </div>
+
+                                    <!-- الفريقان والنتيجة -->
+                                    <div class="col-span-12 sm:col-span-8 grid grid-cols-7 items-center gap-2 text-center">
+                                        <!-- الفريق الأول -->
+                                        <div class="col-span-3 flex items-center justify-end gap-2.5">
+                                            <span class="text-xs sm:text-sm font-extrabold text-white truncate">${m.home_team}</span>
+                                            <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 p-1.5 flex items-center justify-center shrink-0">
+                                                ${m.home_logo
+                                                    ? `<img src="${m.home_logo}" class="w-6 h-6 object-contain" alt="" />`
+                                                    : `<span class="text-xs font-bold text-emerald-400">${m.home_team.slice(0, 2)}</span>`
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <!-- النتيجة -->
+                                        <div class="col-span-1 flex justify-center">
+                                            <div class="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-sm sm:text-base font-black text-emerald-400 whitespace-nowrap">
+                                                ${m.home_score} : ${m.away_score}
+                                            </div>
+                                        </div>
+
+                                        <!-- الفريق الثاني -->
+                                        <div class="col-span-3 flex items-center justify-start gap-2.5">
+                                            <div class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 p-1.5 flex items-center justify-center shrink-0">
+                                                ${m.away_logo
+                                                    ? `<img src="${m.away_logo}" class="w-6 h-6 object-contain" alt="" />`
+                                                    : `<span class="text-xs font-bold text-cyan-400">${m.away_team.slice(0, 2)}</span>`
+                                                }
+                                            </div>
+                                            <span class="text-xs sm:text-sm font-extrabold text-white truncate">${m.away_team}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- زر التفاصيل -->
+                                    <div class="hidden sm:flex sm:col-span-2 justify-end">
+                                        <span class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-emerald-500 hover:text-slate-950 text-slate-300 border border-slate-800 text-xs font-bold transition">
+                                            التفاصيل 📊
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+                        }).join("")}
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        // 4. شريط التصنيفات المنظم مع الأيقونات وعداد الأخبار
+        function renderCategoriesBar() {
+            const container = document.getElementById("categories-bar");
+            const countsMap = { "الكل": allArticles.length };
+            allArticles.forEach(a => {
+                const c = a.category || "كرة قدم عالمية";
+                countsMap[c] = (countsMap[c] || 0) + 1;
+            });
+
+            // دمج التصنيفات المرتبة مع أي تصنيف إضافي له أخبار
+            const knownNames = new Set(ORDERED_CATEGORIES.map(c => c.name));
+            const dynamicExtras = Object.keys(countsMap)
+                .filter(k => !knownNames.has(k))
+                .map(k => ({ name: k, icon: "⚽" }));
+
+            const finalCats = [...ORDERED_CATEGORIES, ...dynamicExtras].filter(
+                c => c.name === "الكل" || (countsMap[c.name] && countsMap[c.name] > 0) || knownNames.has(c.name)
+            );
+
+            container.innerHTML = finalCats.map(cat => {
+                const isActive = cat.name === activeCategory;
+                const count = countsMap[cat.name] || 0;
+                return `
+                    <button
+                        onclick="selectCategory('${cat.name}')"
+                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition flex items-center gap-1.5 ${
+                            isActive
+                                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                                : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                        }"
+                    >
+                        <span>${cat.icon}</span>
+                        <span>${cat.name}</span>
+                        ${count > 0 ? `<span class="px-1.5 py-0.2 rounded-full text-[10px] ${isActive ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-emerald-400'}">${count}</span>` : ''}
+                    </button>
                 `;
             }).join("");
         }
@@ -678,30 +924,174 @@
         function switchMainTab(tab) {
             const homeView = document.getElementById("home-view");
             const matchesView = document.getElementById("matches-view");
+            const standingsView = document.getElementById("standings-view");
             const articleView = document.getElementById("article-view");
+            const legalView = document.getElementById("legal-view");
             const catWrapper = document.getElementById("categories-bar-wrapper");
 
             const btnNews = document.getElementById("nav-tab-news");
             const btnMatches = document.getElementById("nav-tab-matches");
+            const btnStandings = document.getElementById("nav-tab-standings");
 
+            const inactiveClass = "px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white flex items-center gap-1.5";
+            const activeClass = "px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition bg-emerald-500 text-slate-950 shadow flex items-center gap-1.5";
+
+            homeView.classList.add("hidden");
+            matchesView.classList.add("hidden");
+            standingsView.classList.add("hidden");
             articleView.classList.add("hidden");
+            legalView.classList.add("hidden");
+
+            btnNews.className = inactiveClass;
+            btnMatches.className = inactiveClass;
+            if (btnStandings) btnStandings.className = inactiveClass;
 
             if (tab === 'matches') {
-                homeView.classList.add("hidden");
                 catWrapper.classList.add("hidden");
                 matchesView.classList.remove("hidden");
-
-                btnMatches.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition bg-emerald-500 text-slate-950 shadow flex items-center gap-2";
-                btnNews.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white";
+                btnMatches.className = activeClass;
+            } else if (tab === 'standings') {
+                catWrapper.classList.add("hidden");
+                standingsView.classList.remove("hidden");
+                if (btnStandings) btnStandings.className = activeClass;
             } else {
-                matchesView.classList.add("hidden");
                 catWrapper.classList.remove("hidden");
                 homeView.classList.remove("hidden");
-
-                btnNews.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition bg-emerald-500 text-slate-950 shadow";
-                btnMatches.className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white flex items-center gap-2";
+                btnNews.className = activeClass;
             }
             window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // ==================== دوال جدول ترتيب الدوريات ====================
+        function renderStandingsLeaguesBar() {
+            const bar = document.getElementById("standings-leagues-bar");
+            if (!bar) return;
+            bar.innerHTML = STANDINGS_LEAGUES.map(lg => {
+                const isActive = lg.key === activeStandingsLeague;
+                return `
+                    <button
+                        onclick="selectStandingsLeague('${lg.key}')"
+                        class="px-4 py-2 rounded-xl text-xs font-extrabold shrink-0 transition flex items-center gap-2 ${
+                            isActive
+                                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                                : 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
+                        }"
+                    >
+                        <span>${lg.icon}</span>
+                        <span>${lg.name}</span>
+                    </button>
+                `;
+            }).join("");
+        }
+
+        async function selectStandingsLeague(leagueKey) {
+            activeStandingsLeague = leagueKey;
+            renderStandingsLeaguesBar();
+            await loadStandingsFromServer(leagueKey);
+        }
+
+        async function loadStandingsFromServer(leagueKey) {
+            const tbody = document.getElementById("standings-table-body");
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="py-12 text-center text-slate-400 animate-pulse font-bold">
+                            جاري تحميل جدول ترتيب الدوري المحدث...
+                        </td>
+                    </tr>
+                `;
+            }
+
+            try {
+                const res = await fetch(`/api/standings?league=${encodeURIComponent(leagueKey)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const titleEl = document.getElementById("standings-league-title");
+                    if (titleEl && data.league_name) {
+                        titleEl.textContent = `جدول ترتيب ${data.league_name}`;
+                    }
+                    renderStandingsTable(data.standings || []);
+                    if (leagueKey === "epl" || !document.getElementById("sidebar-standings-widget").innerHTML) {
+                        renderSidebarStandings(data.standings || [], data.league_name);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load standings:", e);
+            }
+        }
+
+        function renderStandingsTable(rows) {
+            const tbody = document.getElementById("standings-table-body");
+            if (!tbody) return;
+
+            if (rows.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="py-12 text-center text-slate-400">
+                            لا تتوفر بيانات الترتيب لهذه البطولة حالياً
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = rows.map(r => {
+                const isTop4 = r.rank <= 4;
+                const isRelegation = r.rank >= rows.length - 2 && rows.length >= 14;
+                const badgeColor = isTop4
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                    : (isRelegation ? 'bg-red-500/15 text-red-400 border-red-500/30' : 'bg-slate-900 text-slate-300 border-slate-800');
+
+                return `
+                    <tr class="hover:bg-slate-900/70 transition">
+                        <td class="py-3.5 px-4 text-center">
+                            <span class="w-7 h-7 rounded-lg border ${badgeColor} inline-flex items-center justify-center font-black text-xs">
+                                ${r.rank}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 p-1 flex items-center justify-center shrink-0">
+                                    ${r.logo
+                                        ? `<img src="${r.logo}" class="w-6 h-6 object-contain" alt="${r.team}" />`
+                                        : `<span class="text-xs font-bold text-emerald-400">${r.team.slice(0, 2)}</span>`
+                                    }
+                                </div>
+                                <span class="font-extrabold text-white">${r.team}</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-3 text-center font-bold text-slate-300">${r.played}</td>
+                        <td class="py-3.5 px-3 text-center font-bold text-emerald-400">${r.win}</td>
+                        <td class="py-3.5 px-3 text-center font-bold text-amber-400">${r.draw}</td>
+                        <td class="py-3.5 px-3 text-center font-bold text-red-400">${r.lose}</td>
+                        <td class="py-3.5 px-3 text-center text-slate-400 hidden sm:table-cell" dir="ltr">${r.goals}</td>
+                        <td class="py-3.5 px-3 text-center font-bold text-slate-300" dir="ltr">${r.diff}</td>
+                        <td class="py-3.5 px-5 text-center">
+                            <span class="px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-black">
+                                ${r.points}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        function renderSidebarStandings(rows, leagueName) {
+            const box = document.getElementById("sidebar-standings-widget");
+            if (!box || !rows.length) return;
+            box.innerHTML = rows.slice(0, 6).map(r => `
+                <div onclick="switchMainTab('standings')" class="cursor-pointer flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/75 hover:bg-slate-900 border border-slate-800/80 transition text-xs">
+                    <div class="flex items-center gap-2.5 truncate">
+                        <span class="w-5 h-5 rounded-md bg-emerald-500/15 text-emerald-400 font-black text-[11px] flex items-center justify-center">${r.rank}</span>
+                        ${r.logo ? `<img src="${r.logo}" class="w-5 h-5 object-contain shrink-0" alt="" />` : ''}
+                        <span class="font-extrabold text-white truncate">${r.team}</span>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span class="text-[11px] text-slate-400">${r.played} لعب</span>
+                        <span class="px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 text-emerald-400 font-black">${r.points} ن</span>
+                    </div>
+                </div>
+            `).join("");
         }
 
         function setNewsLayout(mode) {
@@ -718,32 +1108,9 @@
             renderHome();
         }
 
-        function renderCategoriesBar() {
-            const container = document.getElementById("categories-bar");
-            const dynamicCats = Array.from(new Set([
-                "الكل",
-                ...allArticles.map(a => a.category).filter(Boolean),
-                ...BASE_CATEGORIES
-            ]));
-            container.innerHTML = dynamicCats.map(cat => {
-                const isActive = cat === activeCategory;
-                return `
-                    <button
-                        onclick="selectCategory('${cat}')"
-                        class="px-4 py-1.5 rounded-xl text-xs font-bold shrink-0 transition ${
-                            isActive
-                                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                                : 'bg-slate-900/90 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                        }"
-                    >
-                        ${cat}
-                    </button>
-                `;
-            }).join("");
-        }
-
         function selectCategory(cat) {
             activeCategory = cat;
+            document.getElementById("current-category-heading").textContent = cat === "الكل" ? "أحدث التغطيات الإخبارية" : `أخبار ${cat}`;
             renderCategoriesBar();
             switchMainTab('news');
             renderHome();
@@ -774,7 +1141,6 @@
             const articlesContainer = document.getElementById("articles-container");
             const trendingList = document.getElementById("trending-sidebar-list");
 
-            // تحديث قائمة الأكثر قراءة الجانبية
             const topTrending = [...allArticles].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
             if (trendingList) {
                 trendingList.innerHTML = topTrending.map((item, idx) => `
@@ -797,20 +1163,19 @@
                 bentoContainer.innerHTML = "";
                 articlesContainer.innerHTML = `
                     <div class="col-span-full glass-card rounded-3xl p-12 text-center">
-                        <p class="text-lg font-bold text-slate-300 mb-2">لا توجد أخبار مطابقة لبحثك حالياً</p>
+                        <p class="text-lg font-bold text-slate-300 mb-2">لا توجد أخبار في هذا القسم حالياً</p>
+                        <button onclick="selectCategory('الكل')" class="mt-2 px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-extrabold">عرض جميع الأخبار</button>
                     </div>
                 `;
                 return;
             }
 
-            // 1. تصميم Bento Grid لأول 3 أخبار بارزة
             const mainHero = filtered[0];
             const sideHeroes = filtered.slice(1, 3);
             const restArticles = filtered.slice(3);
 
             bentoContainer.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <!-- الخبر الرئيسي الكبير (7 أعمدة) -->
                     <div
                         onclick="openArticle(${mainHero.id})"
                         class="lg:col-span-7 cursor-pointer group relative rounded-3xl overflow-hidden h-[380px] sm:h-[460px] glass-card card-hover"
@@ -840,7 +1205,6 @@
                         </div>
                     </div>
 
-                    <!-- الخبران البارزان الجانبيان (5 أعمدة) -->
                     <div class="lg:col-span-5 flex flex-col gap-6">
                         ${sideHeroes.map(sub => `
                             <div
@@ -866,7 +1230,6 @@
 
             const listToRender = restArticles.length > 0 ? restArticles : filtered;
 
-            // 2. عرض بقية الأخبار حسب طريقة العرض المختارة (Grid أو List)
             if (newsLayout === 'list') {
                 articlesContainer.className = "space-y-5";
                 articlesContainer.innerHTML = listToRender.map(article => `
@@ -1016,7 +1379,131 @@
 
             document.getElementById("home-view").classList.add("hidden");
             document.getElementById("matches-view").classList.add("hidden");
+            document.getElementById("legal-view").classList.add("hidden");
             document.getElementById("article-view").classList.remove("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // ==================== الصفحات القانونية الكاملة لقبول Google AdSense ====================
+        function openLegalPage(pageKey) {
+            document.getElementById("home-view").classList.add("hidden");
+            document.getElementById("matches-view").classList.add("hidden");
+            document.getElementById("article-view").classList.add("hidden");
+            document.getElementById("categories-bar-wrapper").classList.add("hidden");
+            document.getElementById("legal-view").classList.remove("hidden");
+
+            ['privacy', 'about', 'terms', 'contact'].forEach(k => {
+                const btn = document.getElementById(`legal-tab-${k}`);
+                if (!btn) return;
+                btn.className = (k === pageKey)
+                    ? "px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition"
+                    : "px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-slate-800 transition";
+            });
+
+            const box = document.getElementById("legal-content-box");
+
+            if (pageKey === 'privacy') {
+                box.innerHTML = `
+                    <div class="border-b border-slate-800 pb-4">
+                        <span class="text-xs font-bold text-emerald-400">وثيقة رسمية</span>
+                        <h1 class="text-2xl sm:text-3xl font-black text-white mt-1">سياسة الخصوصية وملفات تعريف الارتباط (Privacy Policy)</h1>
+                        <p class="text-xs text-slate-400 mt-1">آخر تحديث: نوفمبر 2026</p>
+                    </div>
+
+                    <p>مرحباً بكم في بوابة <strong>نبض الملاعب</strong>. نحن نولي أهمية قصوى لخصوصية زوارنا الكرام، وتوضح وثيقة سياسة الخصوصية هذه أنواع المعلومات الشخصية التي يجمعها موقعنا وكيفية استخدامها وحمايتها وفق المعايير الدولية ومتطلبات برنامج Google AdSense.</p>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">1. ملفات السجل (Log Files)</h3>
+                    <p>مثل معظم المواقع الإعلامية الكبرى، يستخدم موقع <strong>نبض الملاعب</strong> ملفات السجل. تشمل المعلومات داخل ملفات السجل: عناوين بروتوكول الإنترنت (IP)، نوع المتصفح، مزود خدمة الإنترنت (ISP)، طابع التاريخ والوقت، وصفحات الإحالة/الخروج. هذه المعلومات غير مرتبطة بأي بيانات لتحديد الهوية الشخصية، وتُستخدم حصرياً لتحليل الاتجاهات وإدارة الموقع وتحسين جودة التغطية الرياضية.</p>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">2. ملفات تعريف الارتباط (Cookies) وإعلانات Google AdSense</h3>
+                    <ul class="list-disc pr-6 space-y-2">
+                        <li>نحن نستخدم ملفات تعريف الارتباط لتخزين تفضيلات الزوار وتخصيص محتوى صفحات الويب استناداً إلى نوع متصفح الزوار.</li>
+                        <li>تستخدم شركة <strong>Google</strong>، بصفتها مورداً خارجياً، ملفات تعريف الارتباط لعرض الإعلانات على موقع <strong>نبض الملاعب</strong>.</li>
+                        <li>إن استخدام شركة Google لملف تعريف الارتباط <strong>DART</strong> يمكّنها من عرض الإعلانات للمستخدمين استناداً إلى زيارتهم لموقعنا وغيره من المواقع على شبكة الإنترنت.</li>
+                        <li>يحق للمستخدمين اختيار عدم استخدام ملف تعريف الارتباط DART عن طريق زيارة سياسة الخصوصية الخاصة بشبكة إعلانات Google والمحتوى عبر الرابط الرسمي: <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener" class="text-emerald-400 underline">https://policies.google.com/technologies/ads</a>.</li>
+                    </ul>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">3. شركاؤنا في الإعلانات</h3>
+                    <p>قد يستخدم بعض المعلنين من الأطراف الثالثة على موقعنا ملفات تعريف الارتباط وإشارات الويب (Web Beacons). يتلقى هؤلاء المعلنون عنوان بروتوكول الإنترنت (IP) الخاص بك تلقائياً عند حدوث ذلك لقياس فعالية حملاتهم الإعلانية أو لتخصيص المحتوى الإعلاني الذي تراه.</p>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">4. حقوق حماية البيانات (GDPR & CCPA)</h3>
+                    <p>يحق لكل مستخدم الوصول إلى بياناته الشخصية، أو طلب تصحيحها، أو مسحها، أو تقييد معالجتها. يمكنك أيضاً تعطيل ملفات تعريف الارتباط من خلال خيارات المتصفح الفردية الخاصة بك في أي وقت.</p>
+                `;
+            } else if (pageKey === 'about') {
+                box.innerHTML = `
+                    <div class="border-b border-slate-800 pb-4">
+                        <span class="text-xs font-bold text-emerald-400">تعرف علينا</span>
+                        <h1 class="text-2xl sm:text-3xl font-black text-white mt-1">من نحن — بوابة نبض الملاعب الرياضية</h1>
+                    </div>
+
+                    <p><strong>نبض الملاعب</strong> هي منصة إعلامية رياضية عربية مستقلة، تأسست لتكون المصدر الأول والأسرع لعشاق كرة القدم العربية والعالمية لمتابعة آخر الأخبار، النتائج المباشرة، والإحصائيات التحليلية الدقيقة على مدار 24 ساعة.</p>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">رؤيتنا ورسالتنا الإعلامية</h3>
+                    <p>نهدف إلى تقديم محتوى صحفي رياضي يجمع بين السرعة والمصداقية والعمق التحليلي، مع تغطية شاملة لأهم البطولات الكبرى مثل دوري أبطال أوروبا، الدوري الإنجليزي الممتاز، الدوري الإسباني، دوري روشن السعودي، والدوري المصري، بالإضافة إلى بطولات المنتخبات القارية والدولية.</p>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">معاييرنا التحريرية</h3>
+                    <ul class="list-disc pr-6 space-y-2">
+                        <li><strong>الدقة والمصداقية:</strong> نتحقق من كافة الأخبار والبيانات الرقمية من مصادرها الرسمية قبل النشر.</li>
+                        <li><strong>الحياد والموضوعية:</strong> نقف على مسافة واحدة من جميع الأندية والمنتخبات ونقدم تغطية مهنية تحترم القارئ العربي.</li>
+                        <li><strong>التحديث اللحظي:</strong> نعتمد على أحدث التقنيات البرمجية لتحديث نتائج المباريات وإحصائيات اللاعبين لحظة بلحظة.</li>
+                    </ul>
+                `;
+            } else if (pageKey === 'terms') {
+                box.innerHTML = `
+                    <div class="border-b border-slate-800 pb-4">
+                        <span class="text-xs font-bold text-emerald-400">الشروط والأحكام</span>
+                        <h1 class="text-2xl sm:text-3xl font-black text-white mt-1">اتفاقية وشروط الاستخدام وإخلاء المسؤولية</h1>
+                    </div>
+
+                    <p>بتصفحك واستخدامك لموقع <strong>نبض الملاعب</strong>، فإنك توافق على الالتزام بشروط وأحكام الاستخدام التالية:</p>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">1. حقوق الملكية الفكرية</h3>
+                    <p>جميع المقالات والتحليلات والتصميمات المنشورة على بوابة نبض الملاعب محمية بموجب قوانين حقوق النشر. يُسمح بمشاركة روابط المقالات عبر منصات التواصل الاجتماعي مع الإشارة الواضحة للمصدر.</p>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">2. دقة النتائج والمواعيد</h3>
+                    <p>نسعى جاهدين لتوفير أدق النتائج والمواعيد والإحصائيات للمباريات الرياضية، ومع ذلك فإن مواعيد المباريات والقنوات الناقلة قد تخضع لتغييرات طارئة من قِبل الاتحادات الرياضية أو القنوات المالكة للحقوق.</p>
+
+                    <h3 class="text-lg font-extrabold text-emerald-400 pt-2">3. الروابط الخارجية</h3>
+                    <p>قد يحتوي الموقع على روابط لمواقع خارجية أو إعلانات لطرف ثالث، ولا نتحمل المسؤولية عن ممارسات الخصوصية أو المحتوى الخاص بتلك المواقع الخارجية.</p>
+                `;
+            } else if (pageKey === 'contact') {
+                box.innerHTML = `
+                    <div class="border-b border-slate-800 pb-4">
+                        <span class="text-xs font-bold text-emerald-400">تواصل معنا</span>
+                        <h1 class="text-2xl sm:text-3xl font-black text-white mt-1">اتصل بنا — إدارة بوابة نبض الملاعب</h1>
+                        <p class="text-xs text-slate-400 mt-1">نسعد باستقبال استفساراتكم، مقترحاتكم، وطلبات الإعلانات</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                        <div class="space-y-4">
+                            <p class="text-sm text-slate-300 leading-relaxed">يمكنكم التواصل المباشر مع فريق التحرير أو قسم الإعلانات والشراكات التجارية عبر النموذج المقابل أو عبر بيانات الاتصال الرسمية التالية:</p>
+                            <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2 text-xs">
+                                <div class="flex justify-between"><span class="text-slate-400">البريد التحريري:</span><span class="text-emerald-400 font-bold">contact@nabdelmalab.com</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">قسم الإعلانات:</span><span class="text-emerald-400 font-bold">ads@nabdelmalab.com</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">وقت الاستجابة:</span><span class="text-white font-bold">خلال 24 ساعة عمل</span></div>
+                            </div>
+                        </div>
+
+                        <form onsubmit="event.preventDefault(); document.getElementById('contact-success').classList.remove('hidden'); this.reset();" class="space-y-3 bg-slate-900/80 p-5 rounded-2xl border border-slate-800">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">الاسم الكامل:</label>
+                                <input type="text" required placeholder="أدخل اسمك" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">البريد الإلكتروني:</label>
+                                <input type="email" required placeholder="name@example.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1">الرسالة:</label>
+                                <textarea rows="4" required placeholder="اكتب رسالتك أو استفسارك هنا..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"></textarea>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs transition">إرسال الرسالة</button>
+                            <p id="contact-success" class="hidden text-xs font-bold text-emerald-400 text-center pt-2">✔ تم إرسال رسالتك بنجاح! سنتواصل معك قريباً.</p>
+                        </form>
+                    </div>
+                `;
+            }
+
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
 
@@ -1064,7 +1551,6 @@
             const base = allMatches.find(m => m.id === matchId);
             if (!base) return;
 
-            // تعبئة البيانات الأساسية فوراً
             document.getElementById("md-competition").textContent = base.competition;
             document.getElementById("md-home-name").textContent = base.home_team;
             document.getElementById("md-away-name").textContent = base.away_team;
@@ -1077,7 +1563,7 @@
 
             document.getElementById("md-content-events").innerHTML = `
                 <div class="py-10 text-center text-sm text-slate-400 animate-pulse">
-                    جاري جلب أحداث وإحصائيات المباراة المباشرة...
+                    جاري جلب أحداث وإحصائيات المباراة...
                 </div>
             `;
 
@@ -1118,7 +1604,6 @@
             const statsBox = document.getElementById("md-content-stats");
             const infoBox = document.getElementById("md-content-info");
 
-            // 1. عرض أحداث المباراة (Timeline)
             const events = details.events || [];
             if (events.length === 0) {
                 eventsBox.innerHTML = `
@@ -1132,7 +1617,6 @@
                     const isHome = ev.team_side === 'home';
                     return `
                         <div class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800/90">
-                            <!-- جهة الفريق المضيف -->
                             <div class="flex-1 flex items-center gap-3 ${isHome ? '' : 'opacity-20 pointer-events-none'}">
                                 ${isHome ? `
                                     <span class="text-lg">${ev.icon || '⚽'}</span>
@@ -1143,12 +1627,10 @@
                                 ` : ''}
                             </div>
 
-                            <!-- دقيقة الحدث -->
                             <div class="px-3 py-1 rounded-xl bg-slate-950 border border-emerald-500/30 text-emerald-400 font-black text-xs shrink-0">
                                 ${ev.minute || '•'}
                             </div>
 
-                            <!-- جهة الفريق الضيف -->
                             <div class="flex-1 flex items-center justify-end gap-3 text-left ${!isHome ? '' : 'opacity-20 pointer-events-none'}">
                                 ${!isHome ? `
                                     <div>
@@ -1163,7 +1645,6 @@
                 }).join("");
             }
 
-            // 2. عرض إحصائيات المباراة (Progress Bars)
             const stats = details.stats || [];
             if (stats.length === 0) {
                 statsBox.innerHTML = `
@@ -1194,7 +1675,6 @@
                 }).join("");
             }
 
-            // 3. عرض بطاقة معلومات اللقاء (الملعب، القناة، المعلق، وتوقعات الجمهور)
             const info = details.info || [];
             const poll = details.poll || { home: 40, draw: 25, away: 35 };
 
@@ -1208,7 +1688,6 @@
                     `).join("")}
                 </div>
 
-                <!-- توقعات وتصويت الجمهور -->
                 <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
                     <h4 class="text-xs font-extrabold text-slate-300">📊 نسب توقعات الجمهور لنتيجة اللقاء:</h4>
                     <div class="grid grid-cols-3 text-center text-xs font-bold gap-2">

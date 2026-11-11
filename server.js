@@ -1,9 +1,9 @@
 /**
- * خادم متكامل لمنصة "نبض الملاعب":
- * 1. يسحب جميع الأخبار الرياضية من https://www.ysscores.com/ar/news تلقائياً كل 5 دقائق.
+ * خادم متكامل لمنصة "نبض الملاعب" (متوافق مع Google AdSense و SEO و Vercel):
+ * 1. يسحب جميع الأخبار الرياضية من https://www.ysscores.com/ar/news تلقائياً كل 5 دقائق مع توحيد التصنيفات.
  * 2. يعيد صياغتها عبر Google Gemini API (أو المحرر الذكي المنظم).
- * 3. يسحب جدول المباريات والنتائج المباشرة + تفاصيل كل مباراة (الأحداث، الإحصائيات، القناة، المعلق، الملعب)
- *    من YSScores + ESPN Free Public API.
+ * 3. يسحب جدول المباريات مقسماً حسب البطولة مع شعارات البطولات وتفاصيل كل مباراة.
+ * 4. يوفر ملفات السيو وأدسنس: /robots.txt, /sitemap.xml, /ads.txt
  */
 
 const http = require('http');
@@ -12,16 +12,15 @@ const path = require('path');
 
 const PORT = process.env.PORT || 8000;
 const SEED_DB_FILE = path.join(__dirname, 'articles_db.json');
-// دعم الكتابة في /tmp على الاستضافات المجانية مثل Vercel التي لا تطلب بطاقة بنكية
 const DB_FILE = process.env.VERCEL
     ? path.join('/tmp', 'articles_db.json')
     : SEED_DB_FILE;
 const HTML_FILE = fs.existsSync(path.join(__dirname, 'frontend', 'index.html'))
     ? path.join(__dirname, 'frontend', 'index.html')
     : path.join(__dirname, 'index.html');
+
 const YSSCORES_NEWS_URL = 'https://www.ysscores.com/ar/news';
 const YSSCORES_MATCHES_URL = 'https://www.ysscores.com/ar';
-const ESPN_FREE_API_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard';
 
 const BROWSER_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
@@ -32,6 +31,96 @@ let cachedMatches = [];
 let lastMatchesFetch = 0;
 let lastNewsSyncTime = 0;
 const matchDetailsCache = new Map();
+const standingsCache = new Map();
+
+// قائمة الدوريات المدعومة في جدول الترتيب من YSScores + ESPN
+const SUPPORTED_LEAGUES = {
+    epl: { name: 'الدوري الإنجليزي الممتاز', ysPath: '6811/Premier-League', espnCode: 'eng.1' },
+    laliga: { name: 'الدوري الإسباني', ysPath: '1933/LaLiga', espnCode: 'esp.1' },
+    saudi: { name: 'دوري روشن السعودي', ysPath: '7167/Saudi-Pro-League', espnCode: 'sau.1' },
+    egypt: { name: 'الدوري المصري الممتاز', ysPath: '58553/Egyptian-League', espnCode: 'egy.1' },
+    ucl: { name: 'دوري أبطال أوروبا', ysPath: '12048/UEFA-Champions-League', espnCode: 'uefa.champions' },
+    seriea: { name: 'الدوري الإيطالي', ysPath: '3734/Serie-A', espnCode: 'ita.1' },
+    bundesliga: { name: 'الدوري الألماني', ysPath: '2606/Bundesliga', espnCode: 'ger.1' },
+    ligue1: { name: 'الدوري الفرنسي', ysPath: '1985/Ligue-1', espnCode: 'fra.1' },
+    morocco: { name: 'الدوري المغربي للمحترفين', ysPath: '41135/Botola-Pro', espnCode: 'mar.1' }
+};
+
+// قاموس توحيد التصنيفات الرياضية لتظهر بشكل احترافي ومنظم
+const CATEGORY_NORMALIZATION_MAP = {
+    'الدوري الإنجليزي': 'الدوري الإنجليزي الممتاز',
+    'الدوري الإنجليزي الممتاز': 'الدوري الإنجليزي الممتاز',
+    'البريميرليج': 'الدوري الإنجليزي الممتاز',
+    'الدوري الإسباني': 'الدوري الإسباني',
+    'الليجا': 'الدوري الإسباني',
+    'كأس ملك إسبانيا': 'الكرة الإسبانية',
+    'الدوري الإيطالي': 'الدوري الإيطالي',
+    'الدوري الألماني': 'الدوري الألماني',
+    'الدوري الفرنسي': 'الدوري الفرنسي',
+    'دوري أبطال أوروبا': 'دوري أبطال أوروبا',
+    'الدوري الأوروبي': 'بطولات أوروبا',
+    'الدوري السعودي للمحترفين': 'دوري روشن السعودي',
+    'دوري روشن السعودي': 'دوري روشن السعودي',
+    'الكرة العربية': 'دوري روشن السعودي',
+    'الدوري المصري': 'الدوري المصري',
+    'كأس مصر': 'الدوري المصري',
+    'دوري أبطال أفريقيا': 'بطولات أفريقيا',
+    'بطولات أفريقيا': 'بطولات أفريقيا',
+    'مباراة ودية': 'المنتخبات الدولية',
+    'كأس العالم': 'المنتخبات الدولية',
+    'تصفيات كأس العالم': 'المنتخبات الدولية'
+};
+
+// قاموس تعريب أشهر الأندية العالمية في مباريات ESPN
+const TEAM_ARABIC_NAMES = {
+    'Real Madrid': 'ريال مدريد',
+    'Barcelona': 'برشلونة',
+    'Atlético Madrid': 'أتلتيكو مدريد',
+    'Manchester City': 'مانشستر سيتي',
+    'Liverpool': 'ليفربول',
+    'Arsenal': 'أرسنال',
+    'Chelsea': 'تشيلسي',
+    'Manchester United': 'مانشستر يونايتد',
+    'Tottenham Hotspur': 'توتنهام',
+    'Bayern Munich': 'بايرن ميونخ',
+    'Borussia Dortmund': 'بوروسيا دورتموند',
+    'Bayer Leverkusen': 'باير ليفركوزن',
+    'Paris Saint-Germain': 'باريس سان جيرمان',
+    'Juventus': 'يوفنتوس',
+    'Inter Milan': 'إنتر ميلان',
+    'AC Milan': 'ميلان',
+    'Napoli': 'نابولي',
+    'AS Roma': 'روما',
+    'Benfica': 'بنفيكا',
+    'Sporting CP': 'سبورتينج لشبونة',
+    'FC Porto': 'بورتو',
+    'Ajax': 'أياكس'
+};
+
+function translateTeamName(name) {
+    if (!name) return '';
+    for (const [en, ar] of Object.entries(TEAM_ARABIC_NAMES)) {
+        if (name.toLowerCase().includes(en.toLowerCase())) return ar;
+    }
+    return name;
+}
+
+function normalizeCategory(rawCat, title = '') {
+    const clean = (rawCat || '').trim();
+    if (CATEGORY_NORMALIZATION_MAP[clean]) {
+        return CATEGORY_NORMALIZATION_MAP[clean];
+    }
+    const text = `${clean} ${title}`;
+    if (text.includes('برشلونة') || text.includes('ريال مدريد') || text.includes('أتلتيكو') || text.includes('إسباني')) return 'الدوري الإسباني';
+    if (text.includes('صلاح') || text.includes('ليفربول') || text.includes('مانشستر') || text.includes('أرسنال') || text.includes('تشيلسي') || text.includes('توتنهام')) return 'الدوري الإنجليزي الممتاز';
+    if (text.includes('بايرن') || text.includes('دورتموند') || text.includes('ألمانيا')) return 'الدوري الألماني';
+    if (text.includes('يوفنتوس') || text.includes('ميلان') || text.includes('إنتر') || text.includes('روما')) return 'الدوري الإيطالي';
+    if (text.includes('باريس') || text.includes('فرنسا') || text.includes('مبابي')) return 'الدوري الفرنسي';
+    if (text.includes('الهلال') || text.includes('النصر') || text.includes('الاتحاد') || text.includes('الأهلي السعودي') || text.includes('روشن')) return 'دوري روشن السعودي';
+    if (text.includes('الأهلي') || text.includes('الزمالك') || text.includes('مصر') || text.includes('الفراعنة')) return 'الدوري المصري';
+    if (text.includes('أبطال أوروبا')) return 'دوري أبطال أوروبا';
+    return clean || 'كرة قدم عالمية';
+}
 
 function getEnvKey() {
     const envPath = path.join(__dirname, '.env');
@@ -46,17 +135,22 @@ function getEnvKey() {
 }
 
 function loadArticles() {
+    let list = [];
     if (fs.existsSync(DB_FILE)) {
         try {
-            return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+            list = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
         } catch {}
     }
-    if (fs.existsSync(SEED_DB_FILE)) {
+    if (list.length === 0 && fs.existsSync(SEED_DB_FILE)) {
         try {
-            return JSON.parse(fs.readFileSync(SEED_DB_FILE, 'utf8'));
+            list = JSON.parse(fs.readFileSync(SEED_DB_FILE, 'utf8'));
         } catch {}
     }
-    return [];
+    // توحيد التصنيفات لجميع المقالات المحفوظة
+    return list.map(a => ({
+        ...a,
+        category: normalizeCategory(a.category, a.title)
+    }));
 }
 
 function saveArticles(list) {
@@ -79,7 +173,7 @@ function cleanHtmlText(str) {
 }
 
 /**
- * 1. سحب جميع روابط الأخبار الموجودة في https://www.ysscores.com/ar/news
+ * 1. سحب جميع روابط الأخبار من https://www.ysscores.com/ar/news
  */
 async function fetchYSScoresArticleLinks() {
     const res = await fetch(YSSCORES_NEWS_URL, { headers: BROWSER_HEADERS });
@@ -133,7 +227,7 @@ async function scrapeSingleYSScoresArticle(articleUrl, newsId) {
     if (paragraphs.length === 0) return null;
     const rawContent = paragraphs.join('\n\n');
 
-    let category = 'كرة قدم عالمية';
+    let rawCategory = 'كرة قدم عالمية';
     const tags = [];
 
     const sectionsMatch = html.match(/<section[^>]*class=["'][^"']*news-sections[^"']*["'][^>]*>([\s\S]*?)<\/section>/i);
@@ -141,7 +235,7 @@ async function scrapeSingleYSScoresArticle(articleUrl, newsId) {
         const secHtml = sectionsMatch[1];
         const champMatch = secHtml.match(/البطولة<\/h3>[\s\S]*?<span class="news-sections__name">([\s\S]*?)<\/span>/i);
         if (champMatch) {
-            category = cleanHtmlText(champMatch[1]);
+            rawCategory = cleanHtmlText(champMatch[1]);
         }
         const tagMatches = [...secHtml.matchAll(/<span class="news-sections__name">([\s\S]*?)<\/span>/gi)];
         for (const tm of tagMatches) {
@@ -152,8 +246,9 @@ async function scrapeSingleYSScoresArticle(articleUrl, newsId) {
         }
     }
 
+    const category = normalizeCategory(rawCategory, originalTitle);
     if (tags.length === 0) {
-        tags.push('أخبار الرياضة', 'كرة القدم');
+        tags.push(category, 'أخبار الرياضة');
     }
 
     return {
@@ -171,7 +266,7 @@ async function scrapeSingleYSScoresArticle(articleUrl, newsId) {
 }
 
 /**
- * 3. إعادة صياغة الخبر عبر Google Gemini API (أو المحرر الهيكلي)
+ * 3. إعادة صياغة الخبر عبر Google Gemini API
  */
 async function rewriteWithGemini(rawArticle) {
     const apiKey = getEnvKey();
@@ -212,7 +307,7 @@ ${rawArticle.raw_content}`;
                     title: parsed.title || rawArticle.original_title,
                     summary: parsed.summary || rawArticle.paragraphs[0],
                     content: parsed.content || rawArticle.raw_content,
-                    category: parsed.category || rawArticle.category,
+                    category: normalizeCategory(parsed.category || rawArticle.category, parsed.title),
                     tags: mergedTags,
                     image_url: rawArticle.image_url,
                     views: Math.floor(Math.random() * 240) + 45,
@@ -245,7 +340,7 @@ ${rawArticle.raw_content}`;
         title: rawArticle.original_title,
         summary: firstP,
         content: structuredContent,
-        category: rawArticle.category || 'كرة قدم عالمية',
+        category: normalizeCategory(rawArticle.category, rawArticle.original_title),
         tags: rawArticle.tags || ['أخبار الرياضة', 'كرة القدم'],
         image_url: rawArticle.image_url,
         views: Math.floor(Math.random() * 220) + 30,
@@ -255,7 +350,7 @@ ${rawArticle.raw_content}`;
 }
 
 /**
- * 4. سحب جميع الأخبار المتاحة في صفحة الأخبار في ysscores.com تلقائياً
+ * 4. سحب جميع الأخبار المتاحة تلقائياً
  */
 async function syncAllNewsFromYSScores() {
     console.log('🔄 [Auto-Sync] جاري فحص وسحب جميع الأخبار الجديدة من https://www.ysscores.com/ar/news ...');
@@ -266,7 +361,6 @@ async function syncAllNewsFromYSScores() {
     const newLinks = links.filter(item => !existingIds.has(item.newsId)).slice(0, 8);
     let addedCount = 0;
 
-    // سحب الأخبار على التوازي وبسرعة فائقة (أقل من ثانيتين) لتجنب أي Timeout على الاستضافات السحابية
     const scrapedResults = await Promise.all(
         newLinks.map(async (item) => {
             try {
@@ -292,12 +386,11 @@ async function syncAllNewsFromYSScores() {
     existingArticles.sort((a, b) => (b.id || 0) - (a.id || 0));
     saveArticles(existingArticles);
     lastNewsSyncTime = Date.now();
-    console.log(`📊 إجمالي الأخبار المحفوظة الآن: ${existingArticles.length} خبر (تم إضافة ${addedCount} جديد).`);
     return { addedCount, total: existingArticles.length };
 }
 
 /**
- * 5. جلب المباريات الحية ونتائج اليوم + حفظ بياناتها التفصيلية
+ * 5. جلب المباريات مقسمة حسب البطولة مع شعارات البطولات وتفاصيل اللقاء
  */
 async function fetchLiveAndTodayMatches() {
     const now = Date.now();
@@ -307,66 +400,80 @@ async function fetchLiveAndTodayMatches() {
 
     const matches = [];
 
-    // أ) سحب مباريات اليوم المباشرة والمنتهية بالعربية من YSScores
+    // أ) سحب بطولات ومباريات اليوم من YSScores مع استخراج اسم وشعار كل بطولة
     try {
         const res = await fetch(YSSCORES_MATCHES_URL, { headers: BROWSER_HEADERS });
         if (res.ok) {
             const html = await res.text();
-            const matchBlocks = [...html.matchAll(/<a[^>]+class=["'][^"']*ajax-match-item[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi)];
+            // استخراج كل بلوك بطولة matches-wrapper
+            const wrapperParts = html.split(/<div\s+class=["'][^"']*matches-wrapper[^"']*["']/i).slice(1);
 
-            for (const m of matchBlocks) {
-                const fullTag = m[0];
-                const inner = m[1];
+            for (const part of wrapperParts) {
+                const champTitle = cleanHtmlText((part.match(/champ_title=["']([^"']+)["']/i) || [])[1] || 'مباريات اليوم');
+                const champLogo = (part.match(/champ_img=["']([^"']+)["']/i) || [])[1] || '';
 
-                const matchHref = (fullTag.match(/href=["'](https?:\/\/www\.ysscores\.com\/ar\/match\/[^"']+)["']/i) || [])[1] || '';
-                const rawMatchId = (fullTag.match(/match_id=["'](\d+)["']/i) || [])[1] || String(matches.length + 1);
-                const homeName = (fullTag.match(/home_name=["']([^"']+)["']/i) || [])[1];
-                const awayName = (fullTag.match(/away_name=["']([^"']+)["']/i) || [])[1];
-                const homeLogo = (fullTag.match(/home_image=["']([^"']+)["']/i) || [])[1];
-                const awayLogo = (fullTag.match(/away_image=["']([^"']+)["']/i) || [])[1];
-                const stageTitle = (fullTag.match(/title=["']([^"']+)["']/i) || [])[1] || 'مباريات اليوم';
-                const dataStatus = (fullTag.match(/data-status=["'](\d+)["']/i) || [])[1] || '1';
+                const matchBlocks = [...part.matchAll(/<a[^>]+class=["'][^"']*ajax-match-item[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi)];
+                for (const m of matchBlocks) {
+                    const fullTag = m[0];
+                    const inner = m[1];
 
-                if (!homeName || !awayName) continue;
+                    const matchHref = (fullTag.match(/href=["'](https?:\/\/www\.ysscores\.com\/ar\/match\/[^"']+)["']/i) || [])[1] || '';
+                    const rawMatchId = (fullTag.match(/match_id=["'](\d+)["']/i) || [])[1] || String(matches.length + 1);
+                    const homeName = (fullTag.match(/home_name=["']([^"']+)["']/i) || [])[1];
+                    const awayName = (fullTag.match(/away_name=["']([^"']+)["']/i) || [])[1];
+                    const homeLogo = (fullTag.match(/home_image=["']([^"']+)["']/i) || [])[1];
+                    const awayLogo = (fullTag.match(/away_image=["']([^"']+)["']/i) || [])[1];
+                    const dataStatus = (fullTag.match(/data-status=["'](\d+)["']/i) || [])[1] || '1';
 
-                const score1Match = inner.match(/first-team-result[^>]*>(\d+)<\/(?:div|span)>/i);
-                const score2Match = inner.match(/second-team-result[^>]*>(\d+)<\/(?:div|span)>/i);
-                const statusTextMatch = inner.match(/result-status-text[^>]*>([^<]+)<\/span>/i);
-                const timeMatch = inner.match(/id=["']match-time-\d+["'][^>]*><span>([^<]+)<\/span>/i) ||
-                                  inner.match(/class=["']match-date["'][^>]*>([^<]+)<\/b>/i);
+                    if (!homeName || !awayName) continue;
 
-                const isLive = fullTag.includes('live-match') || dataStatus === '3' || dataStatus === '2';
-                const isFinished = dataStatus === '4' || (statusTextMatch && statusTextMatch[1].includes('انتهت'));
+                    const score1Match = inner.match(/first-team-result[^>]*>(\d+)<\/(?:div|span)>/i);
+                    const score2Match = inner.match(/second-team-result[^>]*>(\d+)<\/(?:div|span)>/i);
+                    const statusTextMatch = inner.match(/result-status-text[^>]*>([^<]+)<\/span>/i);
+                    const timeMatch = inner.match(/id=["']match-time-\d+["'][^>]*><span>([^<]+)<\/span>/i) ||
+                                      inner.match(/class=["']match-date["'][^>]*>([^<]+)<\/b>/i);
 
-                const matchObj = {
-                    id: `ys-${rawMatchId}`,
-                    raw_id: rawMatchId,
-                    match_url: matchHref,
-                    competition: stageTitle,
-                    home_team: cleanHtmlText(homeName),
-                    away_team: cleanHtmlText(awayName),
-                    home_logo: homeLogo || '',
-                    away_logo: awayLogo || '',
-                    home_score: score1Match ? score1Match[1] : '-',
-                    away_score: score2Match ? score2Match[1] : '-',
-                    status_text: statusTextMatch ? cleanHtmlText(statusTextMatch[1]) : (isLive ? 'مباشر' : 'اليوم'),
-                    clock: timeMatch ? cleanHtmlText(timeMatch[1]) : '',
-                    state: isLive ? 'live' : (isFinished ? 'finished' : 'upcoming'),
-                    source: 'YSScores'
-                };
-                matches.push(matchObj);
+                    const isLive = fullTag.includes('live-match') || dataStatus === '3' || dataStatus === '2';
+                    const isFinished = dataStatus === '4' || (statusTextMatch && statusTextMatch[1].includes('انتهت'));
+
+                    matches.push({
+                        id: `ys-${rawMatchId}`,
+                        raw_id: rawMatchId,
+                        match_url: matchHref,
+                        competition: champTitle === 'مباراة ودية' ? 'مباريات المنتخبات الدولية' : champTitle,
+                        competition_logo: champLogo,
+                        home_team: cleanHtmlText(homeName),
+                        away_team: cleanHtmlText(awayName),
+                        home_logo: homeLogo || '',
+                        away_logo: awayLogo || '',
+                        home_score: score1Match ? score1Match[1] : '-',
+                        away_score: score2Match ? score2Match[1] : '-',
+                        status_text: statusTextMatch ? cleanHtmlText(statusTextMatch[1]) : (isLive ? 'مباشر الآن' : 'لم تبدأ'),
+                        clock: timeMatch ? cleanHtmlText(timeMatch[1]) : '',
+                        state: isLive ? 'live' : (isFinished ? 'finished' : 'upcoming'),
+                        source: 'YSScores'
+                    });
+                }
             }
         }
     } catch (e) {
         console.warn('YSScores matches fetch warning:', e.message);
     }
 
-    // ب) سحب المباريات العالمية من ESPN Free Public API (مع تخزين الإحصائيات والأحداث الخاصة بها)
+    // ب) سحب المباريات الأوروبية والعالمية من ESPN Free API مع تعريب أسماء الأندية والبطولات
     try {
-        const espnRes = await fetch(ESPN_FREE_API_URL);
+        const espnRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard');
         if (espnRes.ok) {
             const espnData = await espnRes.json();
-            const events = (espnData.events || []).slice(0, 15);
+            const leaguesMap = {};
+            (espnData.leagues || []).forEach(lg => {
+                leaguesMap[lg.id] = {
+                    name: lg.name,
+                    logo: (lg.logos && lg.logos[0] && lg.logos[0].href) || ''
+                };
+            });
+
+            const events = (espnData.events || []).slice(0, 18);
             for (const ev of events) {
                 const comp = ev.competitions && ev.competitions[0];
                 if (!comp || !comp.competitors || comp.competitors.length < 2) continue;
@@ -386,25 +493,42 @@ async function fetchLiveAndTodayMatches() {
                     statusAr = 'انتهت المباراة';
                 }
 
+                // تحديد اسم البطولة بالعربية
+                const rawLeagueName = (ev.season && ev.season.slug) || '';
+                let compAr = 'منافسات الأندية الأوروبية';
+                if (rawLeagueName.includes('champions')) compAr = 'دوري أبطال أوروبا';
+                else if (rawLeagueName.includes('eng')) compAr = 'الكرة الإنجليزية';
+                else if (rawLeagueName.includes('esp')) compAr = 'الكرة الإسبانية';
+                else if (rawLeagueName.includes('ita')) compAr = 'الكرة الإيطالية';
+                else if (rawLeagueName.includes('ger')) compAr = 'الكرة الألمانية';
+                else if (rawLeagueName.includes('friendly') || rawLeagueName.includes('fifa')) compAr = 'مباريات المنتخبات الدولية';
+
+                const matchTimeAr = ev.date
+                    ? new Date(ev.date).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+                    : detail;
+
                 const matchId = `espn-${ev.id}`;
+                const homeNameAr = translateTeamName(home.team.shortDisplayName || home.team.displayName);
+                const awayNameAr = translateTeamName(away.team.shortDisplayName || away.team.displayName);
+
                 const matchObj = {
                     id: matchId,
                     raw_id: ev.id,
-                    competition: 'مباريات عالمية (ESPN)',
-                    home_team: home.team.shortDisplayName || home.team.displayName,
-                    away_team: away.team.shortDisplayName || away.team.displayName,
+                    competition: compAr,
+                    competition_logo: 'https://imgs.ysscores.com/championship/48/8641690196626.png',
+                    home_team: homeNameAr,
+                    away_team: awayNameAr,
                     home_logo: home.team.logo || '',
                     away_logo: away.team.logo || '',
                     home_score: stState === 'pre' ? '-' : (home.score || '0'),
                     away_score: stState === 'pre' ? '-' : (away.score || '0'),
                     status_text: statusAr,
-                    clock: detail,
+                    clock: stState === 'pre' ? matchTimeAr : detail,
                     state,
                     source: 'ESPN API'
                 };
                 matches.push(matchObj);
 
-                // بناء تفاصيل المباراة من بيانات ESPN الجاهزة
                 const statLabelsAr = {
                     possessionPct: 'الاستحواذ (%)',
                     totalShots: 'إجمالي التسديدات',
@@ -460,10 +584,10 @@ async function fetchLiveAndTodayMatches() {
                 matchDetailsCache.set(matchId, {
                     ...matchObj,
                     info: [
-                        { title: 'البطولة', content: 'منافسات الأندية العالمية' },
+                        { title: 'البطولة', content: compAr },
                         { title: 'ملعب المباراة', content: venueName },
                         { title: 'توقيت اللقاء', content: matchDateStr },
-                        { title: 'الحضور الجماهيري', content: comp.attendance ? `${comp.attendance.toLocaleString()} متفرج` : 'مدرجات كاملة' }
+                        { title: 'الحضور الجماهيري', content: comp.attendance ? `${comp.attendance.toLocaleString()} متفرج` : 'مدرجات جماهيرية' }
                     ],
                     stats: statsList,
                     events: eventsList,
@@ -481,7 +605,7 @@ async function fetchLiveAndTodayMatches() {
 }
 
 /**
- * 6. جلب البيانات التفصيلية الكاملة لمباراة محددة (الأحداث، الإحصائيات، الملعب، القناة، المعلق، تصويت الجمهور)
+ * 6. جلب تفاصيل المباراة الكاملة
  */
 async function getFullMatchDetails(matchId) {
     if (cachedMatches.length === 0) {
@@ -495,14 +619,12 @@ async function getFullMatchDetails(matchId) {
         return matchDetailsCache.get(matchId);
     }
 
-    // إذا كانت المباراة من YSScores، نسحب تفاصيلها الحية مباشرة من صفحة المباراة على ysscores.com
     if (baseMatch.match_url) {
         try {
             const res = await fetch(baseMatch.match_url, { headers: BROWSER_HEADERS });
             if (res.ok) {
                 const html = await res.text();
 
-                // 1. استخراج معلومات المباراة (القناة، المعلق، البطولة، الجولة، الملعب، الوقت، التاريخ)
                 const infoList = [];
                 const seenInfoTitles = new Set();
                 const infoRegex = /<div class="match-info-item">[\s\S]*?<div class="title">([\s\S]*?)<\/div>[\s\S]*?<div class="content">([\s\S]*?)<\/div>/gi;
@@ -516,7 +638,6 @@ async function getFullMatchDetails(matchId) {
                     }
                 }
 
-                // 2. استخراج إحصائيات الفريقين (الاستحواذ، التسديدات، التسللات، الأخطاء، الركنيات)
                 const statsList = [];
                 const seenStats = new Set();
                 const statsRegex = /<div class="stats-text-item[^"]*">\s*<span>([\s\S]*?)<\/span>\s*<span class="title">([\s\S]*?)<\/span>\s*<span>([\s\S]*?)<\/span>/gi;
@@ -535,7 +656,6 @@ async function getFullMatchDetails(matchId) {
                     }
                 }
 
-                // 3. استخراج أحداث المباراة (الأهداف، البطاقات، التبديلات)
                 const eventsList = [];
                 const seenEventIds = new Set();
                 const eventRegex = /<a[^>]+class=["'][^"']*t-side\s+(team-[ab])\s+comm_pop[^"']*["'][^>]*>/gi;
@@ -572,7 +692,6 @@ async function getFullMatchDetails(matchId) {
                     }
                 }
 
-                // 4. استخراج نسب تصويت الجمهور
                 const pollMatch = html.match(/data-home-pct=["'](\d+)["'][\s\S]*?data-draw-pct=["'](\d+)["'][\s\S]*?data-away-pct=["'](\d+)["']/i);
                 const poll = pollMatch
                     ? { home: Number(pollMatch[1]), draw: Number(pollMatch[2]), away: Number(pollMatch[3]) }
@@ -605,9 +724,115 @@ async function getFullMatchDetails(matchId) {
     };
 }
 
+/**
+ * 7. جلب جدول ترتيب الدوري بالعربية الكاملة من YSScores مع بديل ESPN API
+ */
+async function fetchLeagueStandings(leagueKey = 'epl') {
+    const config = SUPPORTED_LEAGUES[leagueKey] || SUPPORTED_LEAGUES.epl;
+    const now = Date.now();
+
+    if (standingsCache.has(leagueKey)) {
+        const cached = standingsCache.get(leagueKey);
+        if ((now - cached.timestamp) < 10 * 60 * 1000) {
+            return cached.data;
+        }
+    }
+
+    const standings = [];
+
+    // 1. الجلب من YSScores بالعربية الكاملة
+    try {
+        const ysUrl = `https://www.ysscores.com/ar/championship/${config.ysPath}`;
+        const res = await fetch(ysUrl, { headers: BROWSER_HEADERS });
+        if (res.ok) {
+            const html = await res.text();
+            // أخذ القسم الأول فقط standing_rank0 (الترتيب العام) لمنع تكرار الذهاب والإياب
+            const rank0Start = html.indexOf('id="standing_rank0"');
+            const rank1Start = html.indexOf('id="standing_rank1"');
+            const targetHtml = rank0Start !== -1
+                ? html.slice(rank0Start, rank1Start !== -1 ? rank1Start : rank0Start + 65000)
+                : html;
+
+            const rowBlocks = targetHtml.split(/<div class="rank-row/i).slice(1);
+            const seenTeams = new Set();
+
+            for (const block of rowBlocks) {
+                const rankNum = cleanHtmlText((block.match(/<div class="rank-col number">(\d+)<\/div>/i) || [])[1]);
+                const teamName = cleanHtmlText((block.match(/<div class="info">([\s\S]*?)<\/div>/i) || [])[1]);
+                const teamLogo = (block.match(/<img[^>]+src=["']([^"']+)["']/i) || [])[1] || '';
+                const played = cleanHtmlText((block.match(/<div class="rank-col played">(\d+)<\/div>/i) || [])[1]);
+                const win = cleanHtmlText((block.match(/<div class="rank-col win">(\d+)<\/div>/i) || [])[1]);
+                const draw = cleanHtmlText((block.match(/<div class="rank-col equal">(\d+)<\/div>/i) || [])[1]);
+                const lose = cleanHtmlText((block.match(/<div class="rank-col lose">(\d+)<\/div>/i) || [])[1]);
+                const goals = cleanHtmlText((block.match(/<div class="rank-col goals">([\s\S]*?)<\/div>/i) || [])[1]);
+                const diff = cleanHtmlText((block.match(/<div class="rank-col diff">([\s\S]*?)<\/div>/i) || [])[1]);
+                const points = cleanHtmlText((block.match(/<div class="rank-col points[^"]*">(\d+)<\/div>/i) || [])[1]);
+
+                if (rankNum && teamName && !seenTeams.has(teamName)) {
+                    seenTeams.add(teamName);
+                    standings.push({
+                        rank: Number(rankNum),
+                        team: teamName,
+                        logo: teamLogo,
+                        played: Number(played || 0),
+                        win: Number(win || 0),
+                        draw: Number(draw || 0),
+                        lose: Number(lose || 0),
+                        goals: goals || '0 : 0',
+                        diff: diff || '0',
+                        points: Number(points || 0)
+                    });
+                }
+            }
+        }
+    } catch (e) {
+        console.warn(`YSScores standings warning (${leagueKey}):`, e.message);
+    }
+
+    // 2. بديل احتياطي من ESPN API في حال لم تتوفر من المصدر الأول
+    if (standings.length === 0 && config.espnCode) {
+        try {
+            const espnUrl = `https://site.web.api.espn.com/apis/v2/sports/soccer/${config.espnCode}/standings`;
+            const r = await fetch(espnUrl);
+            if (r.ok) {
+                const data = await r.json();
+                const entries = (data.children && data.children[0] && data.children[0].standings && data.children[0].standings.entries) || [];
+                for (const entry of entries) {
+                    const stMap = {};
+                    (entry.stats || []).forEach(s => { stMap[s.name] = s.displayValue; });
+                    standings.push({
+                        rank: Number(stMap.rank || standings.length + 1),
+                        team: translateTeamName(entry.team.shortDisplayName || entry.team.displayName),
+                        logo: (entry.team.logos && entry.team.logos[0] && entry.team.logos[0].href) || '',
+                        played: Number(stMap.gamesPlayed || 0),
+                        win: Number(stMap.wins || 0),
+                        draw: Number(stMap.ties || 0),
+                        lose: Number(stMap.losses || 0),
+                        goals: `${stMap.pointsAgainst || 0} : ${stMap.pointsFor || 0}`,
+                        diff: stMap.pointDifferential || '0',
+                        points: Number(stMap.points || 0)
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn(`ESPN standings fallback warning (${leagueKey}):`, e.message);
+        }
+    }
+
+    const result = {
+        league: leagueKey,
+        league_name: config.name,
+        count: standings.length,
+        standings
+    };
+    standingsCache.set(leagueKey, { timestamp: now, data: result });
+    return result;
+}
+
 const requestHandler = async (req, res) => {
     try {
-        const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        const host = req.headers.host || 'nabdelmal3b-2bbh.vercel.app';
+        const urlObj = new URL(req.url, `https://${host}`);
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -617,23 +842,65 @@ const requestHandler = async (req, res) => {
             return res.end();
         }
 
+        // ملفات السيو ومتطلبات Google AdSense الرسمية
+        if (req.method === 'GET' && urlObj.pathname === '/robots.txt') {
+            res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+            return res.end(`User-agent: *\nAllow: /\n\nUser-agent: Mediapartners-Google\nAllow: /\n\nSitemap: https://${host}/sitemap.xml\n`);
+        }
+
+        if (req.method === 'GET' && urlObj.pathname === '/ads.txt') {
+            res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+            return res.end(`# Google AdSense ads.txt - استبدل pub-0000000000000000 برقم الناشر الخاص بك عند التفعيل\ngoogle.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0\n`);
+        }
+
+        if (req.method === 'GET' && urlObj.pathname === '/sitemap.xml') {
+            const articles = loadArticles();
+            const urlsXml = articles.slice(0, 50).map(a => `
+  <url>
+    <loc>https://${host}/#article-${a.id}</loc>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('');
+
+            const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://${host}/</loc>
+    <changefreq>always</changefreq>
+    <priority>1.0</priority>
+  </url>${urlsXml}
+</urlset>`;
+            res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
+            return res.end(sitemap);
+        }
+
         if (req.method === 'GET' && (urlObj.pathname === '/' || urlObj.pathname === '/index.html')) {
             const html = fs.readFileSync(HTML_FILE, 'utf8');
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
             return res.end(html);
         }
 
-        if (req.method === 'GET' && urlObj.pathname === '/api/articles') {
+        if (req.method === 'GET' && (urlObj.pathname === '/api/articles' || urlObj.pathname === '/api/cron')) {
             let articles = loadArticles();
             const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-            if (articles.length === 0 || lastNewsSyncTime < fiveMinutesAgo) {
+            let added = 0;
+            if (articles.length === 0 || lastNewsSyncTime < fiveMinutesAgo || urlObj.pathname === '/api/cron') {
                 try {
-                    await syncAllNewsFromYSScores();
+                    const syncRes = await syncAllNewsFromYSScores();
+                    added = syncRes.addedCount || 0;
                     articles = loadArticles();
                 } catch (e) {
                     console.warn('Sync warning:', e.message);
                 }
             }
+
+            // إذا كان الطلب قادماً من cron-job.org نرجع استجابة خفيفة جداً لتجنب خطأ "الإخراج كبير جداً"
+            const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+            if (urlObj.pathname === '/api/cron' || urlObj.searchParams.get('cron') === '1' || userAgent.includes('cron-job.org')) {
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                return res.end(JSON.stringify({ status: 'ok', synced: true, added, total: articles.length }));
+            }
+
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
             return res.end(JSON.stringify({ count: articles.length, articles }));
         }
@@ -669,6 +936,14 @@ const requestHandler = async (req, res) => {
             return res.end(JSON.stringify(details));
         }
 
+        // نقطة نهاية جلب جدول ترتيب الدوريات (YSScores + ESPN Fallback)
+        if (req.method === 'GET' && urlObj.pathname === '/api/standings') {
+            const leagueKey = urlObj.searchParams.get('league') || 'epl';
+            const data = await fetchLeagueStandings(leagueKey);
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify(data));
+        }
+
         res.writeHead(404);
         res.end('Not Found');
     } catch (err) {
@@ -678,7 +953,6 @@ const requestHandler = async (req, res) => {
     }
 };
 
-// تشغيل الخادم محلياً، وتصدير دالة requestHandler مباشرة لتعمل على Vercel Serverless Functions
 if (!process.env.VERCEL) {
     const server = http.createServer(requestHandler);
     server.listen(PORT, async () => {
