@@ -16,7 +16,9 @@ const SEED_DB_FILE = path.join(__dirname, 'articles_db.json');
 const DB_FILE = process.env.VERCEL
     ? path.join('/tmp', 'articles_db.json')
     : SEED_DB_FILE;
-const HTML_FILE = path.join(__dirname, 'frontend', 'index.html');
+const HTML_FILE = fs.existsSync(path.join(__dirname, 'frontend', 'index.html'))
+    ? path.join(__dirname, 'frontend', 'index.html')
+    : path.join(__dirname, 'index.html');
 const YSSCORES_NEWS_URL = 'https://www.ysscores.com/ar/news';
 const YSSCORES_MATCHES_URL = 'https://www.ysscores.com/ar';
 const ESPN_FREE_API_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard';
@@ -261,21 +263,29 @@ async function syncAllNewsFromYSScores() {
     const existingArticles = loadArticles();
     const existingIds = new Set(existingArticles.map(a => a.id));
 
+    const newLinks = links.filter(item => !existingIds.has(item.newsId)).slice(0, 8);
     let addedCount = 0;
-    for (const item of links) {
-        if (existingIds.has(item.newsId)) continue;
 
-        try {
-            const raw = await scrapeSingleYSScoresArticle(item.url, item.newsId);
-            if (raw) {
-                const processed = await rewriteWithGemini(raw);
-                existingArticles.push(processed);
-                existingIds.add(item.newsId);
-                addedCount++;
-                console.log(`✅ [خبر جديد] (${addedCount}): ${processed.title}`);
+    // سحب الأخبار على التوازي وبسرعة فائقة (أقل من ثانيتين) لتجنب أي Timeout على الاستضافات السحابية
+    const scrapedResults = await Promise.all(
+        newLinks.map(async (item) => {
+            try {
+                const raw = await scrapeSingleYSScoresArticle(item.url, item.newsId);
+                if (raw) {
+                    return await rewriteWithGemini(raw);
+                }
+            } catch (e) {
+                console.warn(`⚠️ تخطي الرابط ${item.url}: ${e.message}`);
             }
-        } catch (e) {
-            console.warn(`⚠️ تخطي الرابط ${item.url}: ${e.message}`);
+            return null;
+        })
+    );
+
+    for (const processed of scrapedResults) {
+        if (processed && !existingIds.has(processed.id)) {
+            existingArticles.push(processed);
+            existingIds.add(processed.id);
+            addedCount++;
         }
     }
 
@@ -595,72 +605,82 @@ async function getFullMatchDetails(matchId) {
     };
 }
 
-const server = http.createServer(async (req, res) => {
-    const urlObj = new URL(req.url, `http://localhost:${PORT}`);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+const requestHandler = async (req, res) => {
+    try {
+        const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') {
-        res.writeHead(204);
-        return res.end();
-    }
-
-    if (req.method === 'GET' && (urlObj.pathname === '/' || urlObj.pathname === '/index.html')) {
-        const html = fs.readFileSync(HTML_FILE, 'utf8');
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        return res.end(html);
-    }
-
-    if (req.method === 'GET' && urlObj.pathname === '/api/articles') {
-        let articles = loadArticles();
-        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-        if (articles.length === 0 || lastNewsSyncTime < fiveMinutesAgo) {
-            await syncAllNewsFromYSScores();
-            articles = loadArticles();
+        if (req.method === 'OPTIONS') {
+            res.writeHead(204);
+            return res.end();
         }
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        return res.end(JSON.stringify({ count: articles.length, articles }));
-    }
 
-    if (req.method === 'GET' && urlObj.pathname.startsWith('/api/articles/')) {
-        const id = Number(urlObj.pathname.split('/').pop());
-        const articles = loadArticles();
-        const item = articles.find(a => a.id === id);
-        if (!item) {
-            res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
-            return res.end(JSON.stringify({ detail: 'الخبر غير موجود' }));
+        if (req.method === 'GET' && (urlObj.pathname === '/' || urlObj.pathname === '/index.html')) {
+            const html = fs.readFileSync(HTML_FILE, 'utf8');
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            return res.end(html);
         }
-        item.views = (item.views || 1) + 1;
-        saveArticles(articles);
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        return res.end(JSON.stringify(item));
-    }
 
-    if (req.method === 'GET' && urlObj.pathname === '/api/matches') {
-        const matches = await fetchLiveAndTodayMatches();
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        return res.end(JSON.stringify({ count: matches.length, matches }));
-    }
-
-    // نقطة نهاية جلب تفاصيل المباراة الكاملة (الأحداث، الإحصائيات، القناة، المعلق، الملعب، تصويت الجمهور)
-    if (req.method === 'GET' && urlObj.pathname.startsWith('/api/matches/')) {
-        const matchId = decodeURIComponent(urlObj.pathname.split('/').pop());
-        const details = await getFullMatchDetails(matchId);
-        if (!details) {
-            res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
-            return res.end(JSON.stringify({ detail: 'المباراة غير موجودة' }));
+        if (req.method === 'GET' && urlObj.pathname === '/api/articles') {
+            let articles = loadArticles();
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            if (articles.length === 0 || lastNewsSyncTime < fiveMinutesAgo) {
+                try {
+                    await syncAllNewsFromYSScores();
+                    articles = loadArticles();
+                } catch (e) {
+                    console.warn('Sync warning:', e.message);
+                }
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify({ count: articles.length, articles }));
         }
-        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        return res.end(JSON.stringify(details));
+
+        if (req.method === 'GET' && urlObj.pathname.startsWith('/api/articles/')) {
+            const id = Number(urlObj.pathname.split('/').pop());
+            const articles = loadArticles();
+            const item = articles.find(a => a.id === id);
+            if (!item) {
+                res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+                return res.end(JSON.stringify({ detail: 'الخبر غير موجود' }));
+            }
+            item.views = (item.views || 1) + 1;
+            saveArticles(articles);
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify(item));
+        }
+
+        if (req.method === 'GET' && urlObj.pathname === '/api/matches') {
+            const matches = await fetchLiveAndTodayMatches();
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify({ count: matches.length, matches }));
+        }
+
+        if (req.method === 'GET' && urlObj.pathname.startsWith('/api/matches/')) {
+            const matchId = decodeURIComponent(urlObj.pathname.split('/').pop());
+            const details = await getFullMatchDetails(matchId);
+            if (!details) {
+                res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+                return res.end(JSON.stringify({ detail: 'المباراة غير موجودة' }));
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify(details));
+        }
+
+        res.writeHead(404);
+        res.end('Not Found');
+    } catch (err) {
+        console.error('Handler error:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: err.message }));
     }
+};
 
-    res.writeHead(404);
-    res.end('Not Found');
-});
-
-// تشغيل الخادم محلياً أو على الاستضافات العادية، وتصديره ليعمل على Vercel بدون كارت بنكي
+// تشغيل الخادم محلياً، وتصدير دالة requestHandler مباشرة لتعمل على Vercel Serverless Functions
 if (!process.env.VERCEL) {
+    const server = http.createServer(requestHandler);
     server.listen(PORT, async () => {
         console.log(`====================================================`);
         console.log(`🚀 بوابة نبض الملاعب تعمل الآن على: http://localhost:${PORT}`);
@@ -684,4 +704,4 @@ if (!process.env.VERCEL) {
     });
 }
 
-module.exports = server;
+module.exports = requestHandler;
