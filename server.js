@@ -30,6 +30,8 @@ const BROWSER_HEADERS = {
 let cachedMatches = [];
 let lastMatchesFetch = 0;
 let lastNewsSyncTime = 0;
+const matchesCacheByDay = new Map();
+const lastMatchesFetchByDay = new Map();
 const matchDetailsCache = new Map();
 const standingsCache = new Map();
 
@@ -70,36 +72,231 @@ const CATEGORY_NORMALIZATION_MAP = {
 };
 
 const TEAM_ARABIC_NAMES = {
+    // الدوري الإسباني
     'Real Madrid': 'ريال مدريد',
     'Barcelona': 'برشلونة',
     'Atlético Madrid': 'أتلتيكو مدريد',
+    'Atletico Madrid': 'أتلتيكو مدريد',
+    'Sevilla': 'إشبيلية',
+    'Real Sociedad': 'ريال سوسيداد',
+    'Athletic Club': 'أتلتيك بلباو',
+    'Athletic Bilbao': 'أتلتيك بلباو',
+    'Real Betis': 'ريال بيتيس',
+    'Villarreal': 'فياريال',
+    'Valencia': 'فالنسيا',
+    'Girona': 'جيرونا',
+    'Mallorca': 'مايوركا',
+    'Osasuna': 'أوساسونا',
+    'Celta Vigo': 'سيلتا فيغو',
+    'Getafe': 'خيتافي',
+    'Las Palmas': 'لاس بالماس',
+    'Rayo Vallecano': 'رايو فاليكانو',
+    'Alavés': 'ألافيس',
+    'Espanyol': 'إسبانيول',
+    'Leganés': 'ليغانيس',
+    'Valladolid': 'بلد الوليد',
+
+    // الدوري الإنجليزي الممتاز
     'Manchester City': 'مانشستر سيتي',
     'Liverpool': 'ليفربول',
     'Arsenal': 'أرسنال',
     'Chelsea': 'تشيلسي',
     'Manchester United': 'مانشستر يونايتد',
     'Tottenham Hotspur': 'توتنهام',
+    'Tottenham': 'توتنهام',
+    'Aston Villa': 'أستون فيلا',
+    'Newcastle United': 'نيوكاسل يونايتد',
+    'Newcastle': 'نيوكاسل',
+    'Brighton & Hove Albion': 'برايتون',
+    'Brighton': 'برايتون',
+    'West Ham United': 'وست هام',
+    'West Ham': 'وست هام',
+    'Wolverhampton Wanderers': 'وولفرهامبتون',
+    'Wolves': 'وولفرهامبتون',
+    'Everton': 'إيفرتون',
+    'Crystal Palace': 'كريستال بالاس',
+    'Brentford': 'برينتفورد',
+    'Fulham': 'فولهام',
+    'AFC Bournemouth': 'بورنموث',
+    'Bournemouth': 'بورنموث',
+    'Nottingham Forest': 'نوتينغهام فورست',
+    'Leicester City': 'ليستر سيتي',
+    'Leicester': 'ليستر سيتي',
+    'Ipswich Town': 'إيبسويتش تاون',
+    'Southampton': 'ساوثهامبتون',
+
+    // الدوري الإيطالي
+    'Juventus': 'يوفنتوس',
+    'Inter Milan': 'إنتر ميلان',
+    'Internazionale': 'إنتر ميلان',
+    'AC Milan': 'ميلان',
+    'Milan': 'ميلان',
+    'Napoli': 'نابولي',
+    'AS Roma': 'روما',
+    'Roma': 'روما',
+    'Lazio': 'لاتسيو',
+    'Atalanta': 'أتالانتا',
+    'Fiorentina': 'فيورنتينا',
+    'Torino': 'تورينو',
+    'Bologna': 'بولونيا',
+    'Monza': 'مونزا',
+    'Genoa': 'جنوى',
+    'Parma': 'بارما',
+    'Udinese': 'أودينيزي',
+    'Cagliari': 'كالياري',
+    'Verona': 'فيرونا',
+    'Empoli': 'إمبولي',
+
+    // الدوري الألماني
     'Bayern Munich': 'بايرن ميونخ',
     'Borussia Dortmund': 'بوروسيا دورتموند',
     'Bayer Leverkusen': 'باير ليفركوزن',
+    'RB Leipzig': 'لايبزيغ',
+    'Leipzig': 'لايبزيغ',
+    'Eintracht Frankfurt': 'فرانكفورت',
+    'Frankfurt': 'فرانكفورت',
+    'VfB Stuttgart': 'شتوتغارت',
+    'Stuttgart': 'شتوتغارت',
+    'Wolfsburg': 'فولفسبورغ',
+    'Borussia Mönchengladbach': 'مونشنغلادباخ',
+    'Werder Bremen': 'فيردر بريمن',
+    'Freiburg': 'فرايبورغ',
+    'Augsburg': 'أوغسبورغ',
+    'Hoffenheim': 'هوفنهايم',
+    'Mainz': 'ماينز',
+    'Union Berlin': 'يونيون برلين',
+
+    // الدوري الفرنسي
     'Paris Saint-Germain': 'باريس سان جيرمان',
-    'Juventus': 'يوفنتوس',
-    'Inter Milan': 'إنتر ميلان',
-    'AC Milan': 'ميلان',
-    'Napoli': 'نابولي',
-    'AS Roma': 'روما',
+    'PSG': 'باريس سان جيرمان',
+    'Marseille': 'مارسيليا',
+    'Monaco': 'موناكو',
+    'Lyon': 'ليون',
+    'Lille': 'ليل',
+    'Lens': 'لانس',
+    'Rennes': 'رين',
+    'Nice': 'نيس',
+    'Strasbourg': 'ستراسبورغ',
+    'Toulouse': 'تولوز',
+
+    // دوري روشن السعودي
+    'Al Hilal': 'الهلال',
+    'Al-Hilal': 'الهلال',
+    'Al Nassr': 'النصر',
+    'Al-Nassr': 'النصر',
+    'Al Ittihad': 'الاتحاد',
+    'Al-Ittihad': 'الاتحاد',
+    'Al Ahli': 'الأهلي السعودي',
+    'Al-Ahli': 'الأهلي السعودي',
+    'Al Shabab': 'الشباب',
+    'Al-Shabab': 'الشباب',
+    'Al Ettifaq': 'الاتفاق',
+    'Al-Ettifaq': 'الاتفاق',
+    'Al Fateh': 'الفتح',
+    'Al Taawoun': 'التعاون',
+    'Al Wehda': 'الوحدة',
+    'Al Fayha': 'الفيحاء',
+    'Damac': 'ضمك',
+    'Al Khaleej': 'الخليج',
+    'Al Raed': 'الرائد',
+    'Al Riyadh': 'الرياض',
+    'Al Qadsiah': 'القادسية',
+    'Al Orobah': 'العروبة',
+    'Al Kholood': 'الخلود',
+
+    // الدوري المصري الممتاز
+    'Al Ahly': 'الأهلي المصري',
+    'Al-Ahly': 'الأهلي المصري',
+    'Zamalek': 'الزمالك',
+    'Pyramids FC': 'بيراميدز',
+    'Pyramids': 'بيراميدز',
+    'Modern Future': 'مودرن سبورت',
+    'Future FC': 'مودرن سبورت',
+    'Ceramica Cleopatra': 'سيراميكا كليوباترا',
+    'Al Masry': 'المصري البورسعيدي',
+    'Ismaily': 'الإسماعيلي',
+    'Smouha': 'سموحة',
+    'ENPPI': 'إنبي',
+    'ZED FC': 'زد إف سي',
+    'National Bank': 'البنك الأهلي',
+    'El Gouna': 'الجونة',
+
+    // بطولات أوروبية وأندية أخرى
     'Benfica': 'بنفيكا',
     'Sporting CP': 'سبورتينج لشبونة',
     'FC Porto': 'بورتو',
-    'Ajax': 'أياكس'
+    'Porto': 'بورتو',
+    'Ajax': 'أياكس',
+    'Feyenoord': 'فينورد',
+    'PSV Eindhoven': 'آيندهوفن',
+    'Galatasaray': 'غلطة سراي',
+    'Fenerbahce': 'فنربخشة',
+    'Besiktas': 'بشكتاش',
+    'Celtic': 'سيلتيك',
+    'Rangers': 'رينجرز',
+
+    // منتخبات دولية
+    'Egypt': 'مصر',
+    'Saudi Arabia': 'السعودية',
+    'Morocco': 'المغرب',
+    'Algeria': 'الجزائر',
+    'Tunisia': 'تونس',
+    'Spain': 'إسبانيا',
+    'England': 'إنجلترا',
+    'France': 'فرنسا',
+    'Germany': 'ألمانيا',
+    'Italy': 'إيطاليا',
+    'Brazil': 'البرازيل',
+    'Argentina': 'الأرجنتين',
+    'Portugal': 'البرتغال',
+    'Netherlands': 'هولندا',
+    'Belgium': 'بلجيكا',
+    'Croatia': 'كرواتيا',
+    'Japan': 'اليابان',
+    'South Korea': 'كوريا الجنوبية',
+    'Vietnam': 'فيتنام',
+    'Chinese Taipei': 'تايبيه الصينية'
 };
 
 function translateTeamName(name) {
     if (!name) return '';
+    const clean = name.replace(/\s+(FC|SC|Club|Women|Ladies|W)\b/gi, '').trim();
     for (const [en, ar] of Object.entries(TEAM_ARABIC_NAMES)) {
-        if (name.toLowerCase().includes(en.toLowerCase())) return ar;
+        if (clean.toLowerCase().includes(en.toLowerCase()) || en.toLowerCase().includes(clean.toLowerCase())) {
+            return ar;
+        }
     }
-    return name;
+    return clean || name;
+}
+
+function translateAltGameNote(note) {
+    if (!note) return 'مباريات كرة القدم';
+    const n = note.toLowerCase();
+    if (n.includes('champions league') || n.includes('uefa champions')) return 'دوري أبطال أوروبا';
+    if (n.includes('europa league')) return 'الدوري الأوروبي';
+    if (n.includes('conference league')) return 'دوري المؤتمر الأوروبي';
+    if (n.includes('premier league') || n.includes('english')) return 'الدوري الإنجليزي الممتاز';
+    if (n.includes('la liga') || n.includes('laliga') || n.includes('spanish')) return 'الدوري الإسباني';
+    if (n.includes('serie a') || n.includes('italian')) return 'الدوري الإيطالي';
+    if (n.includes('bundesliga') || n.includes('german')) return 'الدوري الألماني';
+    if (n.includes('ligue 1') || n.includes('french')) return 'الدوري الفرنسي';
+    if (n.includes('saudi') || n.includes('roshn')) return 'دوري روشن السعودي';
+    if (n.includes('egypt') || n.includes('nile')) return 'الدوري المصري الممتاز';
+    if (n.includes('friendly') || n.includes('international')) return 'مباريات دولية وودية';
+    if (n.includes('nations league')) return 'دوري الأمم الأوروبية';
+    if (n.includes('world cup')) return 'تصفيات كأس العالم';
+    if (n.includes('cup')) return 'كأس ومنافسات رسمية';
+    return note;
+}
+
+function translatePositionAr(pos) {
+    if (!pos) return 'لاعب';
+    const p = pos.toLowerCase();
+    if (p.includes('goal') || p === 'g' || p === 'gk') return 'حارس مرمى';
+    if (p.includes('defen') || p.includes('back') || p === 'd' || p === 'cb' || p === 'lb' || p === 'rb') return 'مدافع';
+    if (p.includes('midfield') || p === 'm' || p === 'cm' || p === 'dm' || p === 'am') return 'خط وسط';
+    if (p.includes('forward') || p.includes('striker') || p.includes('wing') || p === 'f' || p === 'st' || p === 'cf' || p === 'lw' || p === 'rw') return 'مهاجم';
+    return pos;
 }
 
 function normalizeCategory(rawCat, title = '') {
@@ -224,26 +421,65 @@ function cleanHtmlText(str) {
 }
 
 /**
- * 1. سحب جميع روابط الأخبار من https://www.ysscores.com/ar/news
+ * 1. سحب جميع روابط الأخبار من عدة صفحات في https://www.ysscores.com/ar/news
+ * لضمان توفير تدفق دائم وموسع لأحدث المقالات المتجددة لتلبية متطلبات Google AdSense
  */
-async function fetchYSScoresArticleLinks() {
-    const res = await fetch(YSSCORES_NEWS_URL, { headers: BROWSER_HEADERS });
-    if (!res.ok) throw new Error(`HTTP ${res.status} when fetching ${YSSCORES_NEWS_URL}`);
-    const html = await res.text();
-
-    const regex = /href=["'](https?:\/\/www\.ysscores\.com\/ar\/news\/(\d+)\/[^"']+)["']/gi;
+async function fetchYSScoresArticleLinks(maxPages = 5) {
     const seenIds = new Set();
     const links = [];
 
-    let match;
-    while ((match = regex.exec(html)) !== null) {
-        const fullUrl = match[1];
-        const newsId = Number(match[2]);
-        if (!seenIds.has(newsId)) {
-            seenIds.add(newsId);
-            links.push({ newsId, url: fullUrl });
+    // 1. جلب الصفحة الرئيسية للأخبار
+    try {
+        const res = await fetch(YSSCORES_NEWS_URL, { headers: BROWSER_HEADERS });
+        if (res.ok) {
+            const html = await res.text();
+            const regex = /href=["'](https?:\/\/www\.ysscores\.com\/ar\/news\/(\d+)\/[^"']+)["']/gi;
+            let match;
+            while ((match = regex.exec(html)) !== null) {
+                const fullUrl = match[1];
+                const newsId = Number(match[2]);
+                if (!seenIds.has(newsId)) {
+                    seenIds.add(newsId);
+                    links.push({ newsId, url: fullUrl });
+                }
+            }
+        }
+    } catch (e) {
+        console.warn(`تحذير أثناء جلب روابط الأخبار من ${YSSCORES_NEWS_URL}:`, e.message);
+    }
+
+    // 2. جلب الصفحات التالية عبر الـ API الداخلي get_news_more لجمع أكبر عدد من الأخبار
+    for (let page = 2; page <= maxPages; page++) {
+        try {
+            const apiUrl = `https://www.ysscores.com/ar/get_news_more?page=${page}`;
+            const res = await fetch(apiUrl, { headers: BROWSER_HEADERS });
+            if (!res.ok) continue;
+            const data = await res.json();
+            const items = data.items || [];
+            for (const item of items) {
+                const newsId = Number(item.id);
+                const title = item.title || '';
+                // استبعاد أي مقالات تحميل تطبيقات أو إعلانات يلا شووت
+                const lower = title.toLowerCase();
+                if (lower.includes('تحميل تطبيق') || lower.includes('يلا شووت') || lower.includes('يلا شوت') || lower.includes('تطبيق يلا') || lower.includes('apk')) {
+                    continue;
+                }
+                if (newsId && item.link && !seenIds.has(newsId)) {
+                    seenIds.add(newsId);
+                    links.push({
+                        newsId,
+                        url: item.link,
+                        title: item.title,
+                        desc: item.news_desc,
+                        image: item.image
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn(`تحذير أثناء جلب الأخبار من صفحة ${page}:`, e.message);
         }
     }
+
     return links;
 }
 
@@ -401,21 +637,48 @@ ${rawArticle.raw_content}`;
 }
 
 /**
- * 4. سحب جميع الأخبار المتاحة تلقائياً
+ * 4. سحب جميع الأخبار المتاحة تلقائياً مع نظام صفحات يدعم 30 خبراً في كل صفحة حتى 300 خبر
  */
-async function syncAllNewsFromYSScores() {
-    console.log('🔄 [Auto-Sync] جاري فحص وسحب جميع الأخبار الجديدة من https://www.ysscores.com/ar/news ...');
-    const links = await fetchYSScoresArticleLinks();
+async function syncAllNewsFromYSScores(maxNew = 6, maxPages = 5) {
+    console.log('🔄 [Auto-Sync] جاري فحص وسحب أحدث الأخبار الرياضية الموسعة من YSScores...');
+    const links = await fetchYSScoresArticleLinks(maxPages);
     const existingArticles = loadArticles();
     const existingIds = new Set(existingArticles.map(a => a.id));
 
-    const newLinks = links.filter(item => !existingIds.has(item.newsId)).slice(0, 8);
+    // استبعاد المقالات غير المرغوب فيها (مثل تحميل التطبيقات)
+    const newLinks = links.filter(item => {
+        if (existingIds.has(item.newsId)) return false;
+        const title = (item.title || '').toLowerCase();
+        if (title.includes('تحميل تطبيق') || title.includes('يلا شووت') || title.includes('يلا شوت') || title.includes('تطبيق يلا') || title.includes('apk')) {
+            return false;
+        }
+        return true;
+    }).slice(0, maxNew);
+
     let addedCount = 0;
 
     const scrapedResults = await Promise.all(
         newLinks.map(async (item) => {
             try {
-                const raw = await scrapeSingleYSScoresArticle(item.url, item.newsId);
+                let raw = await scrapeSingleYSScoresArticle(item.url, item.newsId);
+                // إذا لم نتمكن من سحب صفحة الخبر بالكامل لكن لدينا العنوان والوصف من الـ API
+                if (!raw && item.title && item.desc) {
+                    const cleanTitle = cleanHtmlText(item.title);
+                    const cleanDesc = cleanHtmlText(item.desc);
+                    const img = (item.image || '').replace('/150/', '/600/') || 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80';
+                    raw = {
+                        id: item.newsId,
+                        original_title: cleanTitle,
+                        original_url: item.url,
+                        paragraphs: [cleanDesc],
+                        raw_content: cleanDesc,
+                        image_url: img,
+                        category: normalizeCategory('كرة قدم عالمية', cleanTitle),
+                        tags: [normalizeCategory('كرة قدم عالمية', cleanTitle), 'أخبار الرياضة'],
+                        created_at: 'اليوم',
+                        source_name: 'KoraTime | كورة تايم'
+                    };
+                }
                 if (raw) {
                     return await rewriteWithGemini(raw);
                 }
@@ -426,18 +689,29 @@ async function syncAllNewsFromYSScores() {
         })
     );
 
-    for (const processed of scrapedResults) {
-        if (processed && !existingIds.has(processed.id)) {
-            existingArticles.push(processed);
+    const validNew = scrapedResults.filter(Boolean);
+    for (const processed of validNew) {
+        if (!existingIds.has(processed.id)) {
+            existingArticles.unshift(processed); // وضع الجديد في أول القائمة
             existingIds.add(processed.id);
             addedCount++;
         }
     }
 
-    existingArticles.sort((a, b) => (b.id || 0) - (a.id || 0));
-    saveArticles(existingArticles);
+    // تنظيف وحذف أي مقالات قديمة قد تكون متعلقة بتحميل التطبيقات
+    const cleanArticles = existingArticles.filter(art => {
+        const t = (art.title || '').toLowerCase();
+        return !t.includes('تحميل تطبيق') && !t.includes('يلا شووت') && !t.includes('يلا شوت') && !t.includes('تطبيق يلا') && !t.includes('apk');
+    });
+
+    // ترتيب المقالات دائماً من الأحدث للأقدم
+    cleanArticles.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+
+    // إبقاء حتى 300 خبراً في قاعدة البيانات لدعم 10 صفحات كاملة (30 خبر لكل صفحة) مع إزاحة الأقدم
+    const trimmedArticles = cleanArticles.slice(0, 300);
+    saveArticles(trimmedArticles);
     lastNewsSyncTime = Date.now();
-    return { addedCount, total: existingArticles.length };
+    return { addedCount, total: trimmedArticles.length };
 }
 
 /**
@@ -538,88 +812,179 @@ function buildFallbackEventsForMatch(matchObj, statsList = []) {
     return events;
 }
 
+function buildFallbackStats() {
+    return [
+        { title: 'الاستحواذ (%)', home: '52%', away: '48%' },
+        { title: 'إجمالي التسديدات', home: '12', away: '9' },
+        { title: 'تسديدات على المرمى', home: '5', away: '4' },
+        { title: 'الضربات الركنية', home: '6', away: '4' },
+        { title: 'الأخطاء المرتكبة', home: '10', away: '13' },
+        { title: 'حالات التسلل', home: '2', away: '1' },
+        { title: 'تصديات الحراس', home: '4', away: '5' }
+    ];
+}
+
+function buildFallbackLineup(homeTeam, awayTeam) {
+    return {
+        home: {
+            team: homeTeam,
+            formation: '4-3-3',
+            is_probable: true,
+            starters: [
+                { num: '1', pos: 'حارس مرمى', name: 'حارس المرمى الأساسي', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '2', pos: 'مدافع', name: 'الظهير الأيمن', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '4', pos: 'مدافع', name: 'قلب دفاع أول', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '5', pos: 'مدافع', name: 'قلب دفاع ثانٍ', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '3', pos: 'مدافع', name: 'الظهير الأيسر', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '6', pos: 'خط وسط', name: 'لاعب ارتكاز', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '8', pos: 'خط وسط', name: 'وسط محوري', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '10', pos: 'خط وسط', name: 'صانع الألعاب', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '7', pos: 'مهاجم', name: 'جناح أيمن', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '9', pos: 'مهاجم', name: 'رأس حربة', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '11', pos: 'مهاجم', name: 'جناح أيسر', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' }
+            ],
+            bench: [
+                { num: '12', pos: 'حارس مرمى', name: 'حارس بديل', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '14', pos: 'مدافع', name: 'مدافع بديل', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '16', pos: 'خط وسط', name: 'وسط بديل', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '19', pos: 'مهاجم', name: 'مهاجم بديل', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' }
+            ]
+        },
+        away: {
+            team: awayTeam,
+            formation: '4-2-3-1',
+            is_probable: true,
+            starters: [
+                { num: '1', pos: 'حارس مرمى', name: 'حارس المرمى الأساسي', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '2', pos: 'مدافع', name: 'الظهير الأيمن', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '4', pos: 'مدافع', name: 'قلب دفاع أول', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '5', pos: 'مدافع', name: 'قلب دفاع ثانٍ', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '3', pos: 'مدافع', name: 'الظهير الأيسر', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '6', pos: 'خط وسط', name: 'لاعب ارتكاز', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '8', pos: 'خط وسط', name: 'وسط مدافع', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '10', pos: 'خط وسط', name: 'صانع ألعاب', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '7', pos: 'مهاجم', name: 'جناح أيمن', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '9', pos: 'مهاجم', name: 'رأس حربة', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '11', pos: 'مهاجم', name: 'جناح أيسر', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' }
+            ],
+            bench: [
+                { num: '12', pos: 'حارس مرمى', name: 'حارس بديل', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '15', pos: 'مدافع', name: 'مدافع بديل', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '17', pos: 'خط وسط', name: 'وسط بديل', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' },
+                { num: '20', pos: 'مهاجم', name: 'مهاجم بديل', photo: 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96' }
+            ]
+        }
+    };
+}
+
 /**
- * 5. جلب المباريات مقسمة حسب البطولة مع شعارات البطولات وتفاصيل اللقاء
+ * 5. جلب جدول المباريات الكامل مع دعم (مباريات أمس، مباريات اليوم، مباريات الغد)
  */
-async function fetchLiveAndTodayMatches() {
+async function fetchMatchesForDate(dayParam = 'today') {
+    const validDay = ['yesterday', 'today', 'tomorrow'].includes(dayParam) ? dayParam : 'today';
     const now = Date.now();
-    if (cachedMatches.length > 0 && (now - lastMatchesFetch) < 45 * 1000) {
-        return cachedMatches;
+    const lastFetch = lastMatchesFetchByDay.get(validDay) || 0;
+    const cached = matchesCacheByDay.get(validDay);
+
+    if (cached && (now - lastFetch) < 45 * 1000) {
+        return cached;
     }
 
+    const d = new Date();
+    if (validDay === 'yesterday') d.setDate(d.getDate() - 1);
+    else if (validDay === 'tomorrow') d.setDate(d.getDate() + 1);
+
+    const yyyymmdd = d.toISOString().split('T')[0].replace(/-/g, '');
     const matches = [];
+    const seenSignatures = new Set();
 
-    // أ) سحب بطولات ومباريات اليوم من YSScores
-    try {
-        const res = await fetch(YSSCORES_MATCHES_URL, { headers: BROWSER_HEADERS });
-        if (res.ok) {
-            const html = await res.text();
-            const wrapperParts = html.split(/<div\s+class=["'][^"']*matches-wrapper[^"']*["']/i).slice(1);
+    // 1) سحب مباريات اليوم من YSScores إن وجد
+    if (validDay === 'today') {
+        try {
+            const res = await fetch(YSSCORES_MATCHES_URL, { headers: BROWSER_HEADERS });
+            if (res.ok) {
+                const html = await res.text();
+                const wrapperParts = html.split(/<div\s+class=["'][^"']*matches-wrapper[^"']*["']/i).slice(1);
 
-            for (const part of wrapperParts) {
-                const champTitle = cleanHtmlText((part.match(/champ_title=["']([^"']+)["']/i) || [])[1] || 'مباريات اليوم');
-                const champLogo = (part.match(/champ_img=["']([^"']+)["']/i) || [])[1] || '';
+                for (const part of wrapperParts) {
+                    const champTitle = cleanHtmlText((part.match(/champ_title=["']([^"']+)["']/i) || [])[1] || 'مباريات اليوم');
+                    const champLogo = (part.match(/champ_img=["']([^"']+)["']/i) || [])[1] || '';
 
-                const matchBlocks = [...part.matchAll(/<a[^>]+class=["'][^"']*ajax-match-item[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi)];
-                for (const m of matchBlocks) {
-                    const fullTag = m[0];
-                    const inner = m[1];
+                    const matchBlocks = [...part.matchAll(/<a[^>]+class=["'][^"']*ajax-match-item[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi)];
+                    for (const m of matchBlocks) {
+                        const fullTag = m[0];
+                        const inner = m[1];
 
-                    const matchHref = (fullTag.match(/href=["'](https?:\/\/www\.ysscores\.com\/ar\/match\/[^"']+)["']/i) || [])[1] || '';
-                    const rawMatchId = (fullTag.match(/match_id=["'](\d+)["']/i) || [])[1] || String(matches.length + 1);
-                    const homeName = (fullTag.match(/home_name=["']([^"']+)["']/i) || [])[1];
-                    const awayName = (fullTag.match(/away_name=["']([^"']+)["']/i) || [])[1];
-                    const homeLogo = (fullTag.match(/home_image=["']([^"']+)["']/i) || [])[1];
-                    const awayLogo = (fullTag.match(/away_image=["']([^"']+)["']/i) || [])[1];
-                    const dataStatus = (fullTag.match(/data-status=["'](\d+)["']/i) || [])[1] || '1';
+                        const matchHref = (fullTag.match(/href=["'](https?:\/\/www\.ysscores\.com\/ar\/match\/[^"']+)["']/i) || [])[1] || '';
+                        const rawMatchId = (fullTag.match(/match_id=["'](\d+)["']/i) || [])[1] || String(matches.length + 1);
+                        const homeName = (fullTag.match(/home_name=["']([^"']+)["']/i) || [])[1];
+                        const awayName = (fullTag.match(/away_name=["']([^"']+)["']/i) || [])[1];
+                        const homeLogo = (fullTag.match(/home_image=["']([^"']+)["']/i) || [])[1];
+                        const awayLogo = (fullTag.match(/away_image=["']([^"']+)["']/i) || [])[1];
+                        const dataStatus = (fullTag.match(/data-status=["'](\d+)["']/i) || [])[1] || '1';
 
-                    if (!homeName || !awayName) continue;
+                        if (!homeName || !awayName) continue;
 
-                    const score1Match = inner.match(/first-team-result[^>]*>(\d+)<\/(?:div|span)>/i);
-                    const score2Match = inner.match(/second-team-result[^>]*>(\d+)<\/(?:div|span)>/i);
-                    const statusTextMatch = inner.match(/result-status-text[^>]*>([^<]+)<\/span>/i);
-                    const timeMatch = inner.match(/id=["']match-time-\d+["'][^>]*><span>([^<]+)<\/span>/i) ||
-                                      inner.match(/class=["']match-date["'][^>]*>([^<]+)<\/b>/i);
+                        const score1Match = inner.match(/first-team-result[^>]*>(\d+)<\/(?:div|span)>/i);
+                        const score2Match = inner.match(/second-team-result[^>]*>(\d+)<\/(?:div|span)>/i);
+                        const statusTextMatch = inner.match(/result-status-text[^>]*>([^<]+)<\/span>/i);
+                        const timeMatch = inner.match(/id=["']match-time-\d+["'][^>]*><span>([^<]+)<\/span>/i) ||
+                                          inner.match(/class=["']match-date["'][^>]*>([^<]+)<\/b>/i);
 
-                    const isLive = fullTag.includes('live-match') || dataStatus === '3' || dataStatus === '2';
-                    const isFinished = dataStatus === '4' || (statusTextMatch && statusTextMatch[1].includes('انتهت'));
+                        const isLive = fullTag.includes('live-match') || dataStatus === '3' || dataStatus === '2';
+                        const isFinished = dataStatus === '4' || (statusTextMatch && statusTextMatch[1].includes('انتهت'));
 
-                    matches.push({
-                        id: `ys-${rawMatchId}`,
-                        raw_id: rawMatchId,
-                        match_url: matchHref,
-                        competition: champTitle === 'مباراة ودية' ? 'مباريات المنتخبات الدولية' : champTitle,
-                        competition_logo: champLogo,
-                        home_team: cleanHtmlText(homeName),
-                        away_team: cleanHtmlText(awayName),
-                        home_logo: homeLogo || '',
-                        away_logo: awayLogo || '',
-                        home_score: score1Match ? score1Match[1] : '-',
-                        away_score: score2Match ? score2Match[1] : '-',
-                        status_text: statusTextMatch ? cleanHtmlText(statusTextMatch[1]) : (isLive ? 'مباشر الآن' : 'لم تبدأ'),
-                        clock: timeMatch ? cleanHtmlText(timeMatch[1]) : '',
-                        state: isLive ? 'live' : (isFinished ? 'finished' : 'upcoming'),
-                        source: 'YSScores'
-                    });
+                        const sig = `${cleanHtmlText(homeName).toLowerCase()}-${cleanHtmlText(awayName).toLowerCase()}`;
+                        seenSignatures.add(sig);
+
+                        matches.push({
+                            id: `ys-${rawMatchId}`,
+                            raw_id: rawMatchId,
+                            match_url: matchHref,
+                            competition: champTitle === 'مباراة ودية' ? 'مباريات دولية وودية' : champTitle,
+                            competition_logo: champLogo,
+                            home_team: cleanHtmlText(homeName),
+                            away_team: cleanHtmlText(awayName),
+                            home_logo: homeLogo || '',
+                            away_logo: awayLogo || '',
+                            home_score: score1Match ? score1Match[1] : '-',
+                            away_score: score2Match ? score2Match[1] : '-',
+                            status_text: statusTextMatch ? cleanHtmlText(statusTextMatch[1]) : (isLive ? 'مباشر الآن' : (isFinished ? 'انتهت' : 'لم تبدأ')),
+                            clock: timeMatch ? cleanHtmlText(timeMatch[1]) : '',
+                            state: isLive ? 'live' : (isFinished ? 'finished' : 'upcoming'),
+                            day: validDay,
+                            source: 'YSScores'
+                        });
+                    }
                 }
             }
+        } catch (e) {
+            console.warn('YSScores matches fetch warning:', e.message);
         }
-    } catch (e) {
-        console.warn('YSScores matches fetch warning:', e.message);
     }
 
-    // ب) سحب المباريات الأوروبية والعالمية من ESPN Free API
+    // 2) سحب مباريات اليوم/أمس/الغد من ESPN Scoreboard
     try {
-        const espnRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard');
+        const espnUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=${yyyymmdd}`;
+        const espnRes = await fetch(espnUrl);
         if (espnRes.ok) {
             const espnData = await espnRes.json();
-            const events = (espnData.events || []).slice(0, 18);
+            const events = (espnData.events || []).slice(0, 50);
+
             for (const ev of events) {
                 const comp = ev.competitions && ev.competitions[0];
                 if (!comp || !comp.competitors || comp.competitors.length < 2) continue;
 
                 const home = comp.competitors.find(c => c.homeAway === 'home') || comp.competitors[0];
                 const away = comp.competitors.find(c => c.homeAway === 'away') || comp.competitors[1];
+
+                const homeNameAr = translateTeamName(home.team.shortDisplayName || home.team.displayName);
+                const awayNameAr = translateTeamName(away.team.shortDisplayName || away.team.displayName);
+
+                const sig = `${homeNameAr.toLowerCase()}-${awayNameAr.toLowerCase()}`;
+                if (seenSignatures.has(sig)) continue;
+                seenSignatures.add(sig);
+
                 const stState = (ev.status && ev.status.type && ev.status.type.state) || 'pre';
                 const detail = (ev.status && ev.status.type && ev.status.type.shortDetail) || '';
 
@@ -628,29 +993,18 @@ async function fetchLiveAndTodayMatches() {
                 if (stState === 'in') {
                     state = 'live';
                     statusAr = 'مباشر الآن';
-                } else if (stState === 'post') {
+                } else if (stState === 'post' || validDay === 'yesterday') {
                     state = 'finished';
                     statusAr = 'انتهت المباراة';
                 }
 
-                const rawLeagueName = (ev.season && ev.season.slug) || '';
-                let compAr = 'منافسات الأندية الأوروبية';
-                if (rawLeagueName.includes('champions')) compAr = 'دوري أبطال أوروبا';
-                else if (rawLeagueName.includes('eng')) compAr = 'الكرة الإنجليزية';
-                else if (rawLeagueName.includes('esp')) compAr = 'الكرة الإسبانية';
-                else if (rawLeagueName.includes('ita')) compAr = 'الكرة الإيطالية';
-                else if (rawLeagueName.includes('ger')) compAr = 'الكرة الألمانية';
-                else if (rawLeagueName.includes('friendly') || rawLeagueName.includes('fifa')) compAr = 'مباريات المنتخبات الدولية';
-
+                const compAr = translateAltGameNote(comp.altGameNote || (ev.season && ev.season.slug) || '');
                 const matchTimeAr = ev.date
                     ? new Date(ev.date).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
                     : detail;
 
                 const matchId = `espn-${ev.id}`;
-                const homeNameAr = translateTeamName(home.team.shortDisplayName || home.team.displayName);
-                const awayNameAr = translateTeamName(away.team.shortDisplayName || away.team.displayName);
-
-                const matchObj = {
+                matches.push({
                     id: matchId,
                     raw_id: ev.id,
                     competition: compAr,
@@ -659,110 +1013,208 @@ async function fetchLiveAndTodayMatches() {
                     away_team: awayNameAr,
                     home_logo: home.team.logo || '',
                     away_logo: away.team.logo || '',
-                    home_score: stState === 'pre' ? '-' : (home.score || '0'),
-                    away_score: stState === 'pre' ? '-' : (away.score || '0'),
+                    home_score: stState === 'pre' && validDay !== 'yesterday' ? '-' : (home.score || '0'),
+                    away_score: stState === 'pre' && validDay !== 'yesterday' ? '-' : (away.score || '0'),
                     status_text: statusAr,
-                    clock: stState === 'pre' ? matchTimeAr : detail,
+                    clock: (state === 'upcoming') ? matchTimeAr : (detail || statusAr),
                     state,
+                    day: validDay,
                     source: 'ESPN API'
-                };
-                matches.push(matchObj);
-
-                const statLabelsAr = {
-                    possessionPct: 'الاستحواذ (%)',
-                    totalShots: 'إجمالي التسديدات',
-                    shotsOnTarget: 'تسديدات على المرمى',
-                    wonCorners: 'الركنيات',
-                    foulsCommitted: 'الأخطاء المرتكبة'
-                };
-                const homeStatsMap = {};
-                const awayStatsMap = {};
-                (home.statistics || []).forEach(s => { homeStatsMap[s.name] = s.displayValue; });
-                (away.statistics || []).forEach(s => { awayStatsMap[s.name] = s.displayValue; });
-
-                const statsList = [];
-                for (const [key, labelAr] of Object.entries(statLabelsAr)) {
-                    if (homeStatsMap[key] !== undefined || awayStatsMap[key] !== undefined) {
-                        statsList.push({
-                            title: labelAr,
-                            home: homeStatsMap[key] || '0',
-                            away: awayStatsMap[key] || '0'
-                        });
-                    }
-                }
-
-                let eventsList = (comp.details || []).map(d => {
-                    const isHome = d.team && d.team.id === home.team.id;
-                    const player = (d.athletesInvolved && d.athletesInvolved[0] && d.athletesInvolved[0].displayName) || '';
-                    const assist = (d.athletesInvolved && d.athletesInvolved[1] && d.athletesInvolved[1].displayName) || '';
-                    let typeAr = 'حدث في المباراة';
-                    let icon = '⚡';
-                    if (d.scoringPlay) {
-                        typeAr = d.penaltyKick ? 'هدف (ركلة جزاء)' : 'هدف';
-                        icon = '⚽';
-                    } else if (d.redCard) {
-                        typeAr = 'بطاقة حمراء';
-                        icon = '🟥';
-                    } else if (d.yellowCard) {
-                        typeAr = 'بطاقة صفراء';
-                        icon = '🟨';
-                    }
-                    return {
-                        minute: (d.clock && d.clock.displayValue) || '',
-                        team_side: isHome ? 'home' : 'away',
-                        type: typeAr,
-                        icon,
-                        player,
-                        assist
-                    };
-                });
-
-                if (eventsList.length === 0) {
-                    eventsList = buildFallbackEventsForMatch(matchObj, statsList);
-                }
-
-                const venueName = (comp.venue && comp.venue.fullName) ? `${comp.venue.fullName}${comp.venue.address && comp.venue.address.city ? ' - ' + comp.venue.address.city : ''}` : 'ملعب معتمد دولياً';
-                const matchDateStr = ev.date ? new Date(ev.date).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) : 'اليوم';
-
-                matchDetailsCache.set(matchId, {
-                    ...matchObj,
-                    info: [
-                        { title: 'البطولة', content: compAr },
-                        { title: 'ملعب المباراة', content: venueName },
-                        { title: 'توقيت اللقاء', content: matchDateStr },
-                        { title: 'الحضور الجماهيري', content: comp.attendance ? `${comp.attendance.toLocaleString()} متفرج` : 'مدرجات جماهيرية' }
-                    ],
-                    stats: statsList,
-                    events: eventsList,
-                    poll: { home: 45, draw: 25, away: 30 }
                 });
             }
         }
     } catch (e) {
-        console.warn('ESPN matches fetch warning:', e.message);
+        console.warn('ESPN scoreboard fetch warning:', e.message);
     }
 
-    cachedMatches = matches;
-    lastMatchesFetch = now;
+    // ترتيب المباريات: مباشر أولاً، ثم الجارية والمنتهية، ثم القادمة
+    matches.sort((a, b) => {
+        const order = { live: 0, upcoming: 1, finished: 2 };
+        return (order[a.state] || 1) - (order[b.state] || 1);
+    });
+
+    matchesCacheByDay.set(validDay, matches);
+    lastMatchesFetchByDay.set(validDay, now);
+    if (validDay === 'today') {
+        cachedMatches = matches;
+        lastMatchesFetch = now;
+    }
     return matches;
 }
 
+async function fetchLiveAndTodayMatches() {
+    return await fetchMatchesForDate('today');
+}
+
 /**
- * 6. جلب تفاصيل المباراة الكاملة (مع ضمان وجود خط زمني للأحداث حتى للمباريات الودية)
+ * 6. جلب تفاصيل وتشكيلة وإحصائيات المباراة الكاملة
  */
 async function getFullMatchDetails(matchId) {
-    if (cachedMatches.length === 0) {
-        await fetchLiveAndTodayMatches();
-    }
-
-    const baseMatch = cachedMatches.find(m => m.id === matchId);
-    if (!baseMatch) return null;
-
     if (matchDetailsCache.has(matchId)) {
         return matchDetailsCache.get(matchId);
     }
 
-    if (baseMatch.match_url) {
+    let baseMatch = null;
+    for (const list of matchesCacheByDay.values()) {
+        const found = list.find(m => m.id === matchId);
+        if (found) { baseMatch = found; break; }
+    }
+    if (!baseMatch) {
+        baseMatch = cachedMatches.find(m => m.id === matchId);
+    }
+
+    // إذا كانت المباراة من ESPN (تحتوي على التشكيلات الرسمية والإحصائيات والأحداث الدقيقة)
+    if (matchId.startsWith('espn-')) {
+        const rawId = matchId.replace('espn-', '');
+        try {
+            const sumUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary?event=${rawId}`;
+            const sumRes = await fetch(sumUrl);
+            if (sumRes.ok) {
+                const sumData = await sumRes.json();
+                const comp = (sumData.header && sumData.header.competitions && sumData.header.competitions[0]) || {};
+                const competitors = comp.competitors || [];
+                const home = competitors.find(c => c.homeAway === 'home') || competitors[0] || {};
+                const away = competitors.find(c => c.homeAway === 'away') || competitors[1] || {};
+
+                const homeNameAr = baseMatch ? baseMatch.home_team : translateTeamName(home.team ? home.team.displayName : '');
+                const awayNameAr = baseMatch ? baseMatch.away_team : translateTeamName(away.team ? away.team.displayName : '');
+
+                // أ) التشكيلة الكاملة والبدلاء وخطة اللعب
+                const lineups = {
+                    home: { team: homeNameAr, formation: '4-3-3', starters: [], bench: [] },
+                    away: { team: awayNameAr, formation: '4-3-3', starters: [], bench: [] }
+                };
+
+                if (sumData.rosters && sumData.rosters.length >= 2) {
+                    sumData.rosters.forEach((r, idx) => {
+                        const isHome = idx === 0 || (r.team && home.team && r.team.id === home.team.id);
+                        const target = isHome ? lineups.home : lineups.away;
+                        if (r.formation) target.formation = r.formation;
+                        (r.roster || []).forEach(player => {
+                            const pObj = {
+                                name: (player.athlete && player.athlete.displayName) || 'لاعب',
+                                pos: translatePositionAr(player.position ? player.position.displayName : ''),
+                                num: player.jersey || String(target.starters.length + 1),
+                                photo: (player.athlete && player.athlete.headshot) ? player.athlete.headshot.href : 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96'
+                            };
+                            if (player.starter) target.starters.push(pObj);
+                            else target.bench.push(pObj);
+                        });
+                    });
+                }
+
+                if (lineups.home.starters.length === 0) {
+                    const fallback = buildFallbackLineup(homeNameAr, awayNameAr);
+                    lineups.home = fallback.home;
+                    lineups.away = fallback.away;
+                }
+
+                // ب) إحصائيات المباراة الكاملة
+                const statsList = [];
+                if (sumData.boxscore && sumData.boxscore.teams && sumData.boxscore.teams.length >= 2) {
+                    const t0Stats = {};
+                    const t1Stats = {};
+                    (sumData.boxscore.teams[0].statistics || []).forEach(s => { t0Stats[s.name] = s.displayValue; });
+                    (sumData.boxscore.teams[1].statistics || []).forEach(s => { t1Stats[s.name] = s.displayValue; });
+
+                    const STAT_MAPPINGS = [
+                        { key: 'possessionPct', title: 'الاستحواذ (%)' },
+                        { key: 'totalShots', title: 'إجمالي التسديدات' },
+                        { key: 'shotsOnTarget', title: 'تسديدات على المرمى' },
+                        { key: 'wonCorners', title: 'الضربات الركنية' },
+                        { key: 'foulsCommitted', title: 'الأخطاء المرتكبة' },
+                        { key: 'offsides', title: 'حالات التسلل' },
+                        { key: 'saves', title: 'تصديات الحراس' },
+                        { key: 'yellowCards', title: 'البطاقات الصفراء' },
+                        { key: 'redCards', title: 'البطاقات الحمراء' }
+                    ];
+
+                    for (const m of STAT_MAPPINGS) {
+                        if (t0Stats[m.key] !== undefined || t1Stats[m.key] !== undefined) {
+                            statsList.push({
+                                title: m.title,
+                                home: t0Stats[m.key] || '0',
+                                away: t1Stats[m.key] || '0'
+                            });
+                        }
+                    }
+                }
+
+                // ج) الأحداث المباشرة (أهداف، إنذارات، طرد، تبديلات)
+                const eventsList = [];
+                (sumData.keyEvents || []).forEach(ke => {
+                    let typeAr = 'حدث';
+                    let icon = '⚡';
+                    if (ke.scoringPlay) {
+                        typeAr = ke.penaltyKick ? 'هدف (ركلة جزاء)' : 'هدف';
+                        icon = '⚽';
+                    } else if (ke.redCard) {
+                        typeAr = 'بطاقة حمراء';
+                        icon = '🟥';
+                    } else if (ke.yellowCard) {
+                        typeAr = 'بطاقة صفراء';
+                        icon = '🟨';
+                    } else if (ke.type && ke.type.text && ke.type.text.toLowerCase().includes('sub')) {
+                        typeAr = 'تبديل';
+                        icon = '🔄';
+                    }
+
+                    const isHome = ke.team && home.team && ke.team.id === home.team.id;
+                    const athletes = ke.participants || ke.athletesInvolved || [];
+                    const player = (athletes[0] && athletes[0].athlete && athletes[0].athlete.displayName) || ke.text || '';
+                    const assist = (athletes[1] && athletes[1].athlete && athletes[1].athlete.displayName) || '';
+
+                    if (player || typeAr !== 'حدث') {
+                        eventsList.push({
+                            minute: (ke.clock && ke.clock.displayValue) ? `${ke.clock.displayValue}'` : '',
+                            team_side: isHome ? 'home' : 'away',
+                            type: typeAr,
+                            icon,
+                            player,
+                            assist
+                        });
+                    }
+                });
+
+                const venue = (sumData.gameInfo && sumData.gameInfo.venue) ? sumData.gameInfo.venue.fullName : 'ملعب معتمد';
+                const referee = (sumData.gameInfo && sumData.gameInfo.officials && sumData.gameInfo.officials[0]) ? sumData.gameInfo.officials[0].displayName : 'طاقم تحكيم دولي';
+
+                const detailObj = {
+                    ...(baseMatch || {}),
+                    id: matchId,
+                    raw_id: rawId,
+                    competition: baseMatch ? baseMatch.competition : translateAltGameNote(comp.altGameNote || ''),
+                    home_team: homeNameAr,
+                    away_team: awayNameAr,
+                    home_logo: (home.team && home.team.logo) || (baseMatch && baseMatch.home_logo) || '',
+                    away_logo: (away.team && away.team.logo) || (baseMatch && baseMatch.away_logo) || '',
+                    home_score: home.score !== undefined ? home.score : (baseMatch ? baseMatch.home_score : '0'),
+                    away_score: away.score !== undefined ? away.score : (baseMatch ? baseMatch.away_score : '0'),
+                    status_text: (comp.status && comp.status.type && comp.status.type.shortDetail) || (baseMatch ? baseMatch.status_text : 'انتهت'),
+                    clock: (comp.status && comp.status.type && comp.status.type.detail) || (baseMatch ? baseMatch.clock : ''),
+                    state: (comp.status && comp.status.type && comp.status.type.state === 'in') ? 'live' : (comp.status && comp.status.type && comp.status.type.state === 'post' ? 'finished' : 'upcoming'),
+                    info: [
+                        { title: 'البطولة', content: baseMatch ? baseMatch.competition : translateAltGameNote(comp.altGameNote || '') },
+                        { title: 'ملعب اللقاء', content: venue },
+                        { title: 'حكم المباراة', content: referee },
+                        { title: 'التغطية المباشرة', content: 'شبكة KoraTime الرياضية' }
+                    ],
+                    stats: statsList.length > 0 ? statsList : buildFallbackStats(),
+                    events: eventsList.length > 0 ? eventsList : buildFallbackEventsForMatch(baseMatch || { home_score: home.score, away_score: away.score }),
+                    lineups,
+                    poll: { home: 48, draw: 22, away: 30 }
+                };
+
+                matchDetailsCache.set(matchId, detailObj);
+                return detailObj;
+            }
+        } catch (e) {
+            console.warn('ESPN match details fetch warning:', e.message);
+        }
+    }
+
+    // إذا كانت المباراة من YSScores
+    if (baseMatch && baseMatch.match_url) {
         try {
             const res = await fetch(baseMatch.match_url, { headers: BROWSER_HEADERS });
             if (res.ok) {
@@ -791,11 +1243,7 @@ async function getFullMatchDetails(matchId) {
                     const awayVal = cleanHtmlText(stMatch[3]);
                     if (statTitle && !seenStats.has(statTitle)) {
                         seenStats.add(statTitle);
-                        statsList.push({
-                            title: statTitle,
-                            home: homeVal,
-                            away: awayVal
-                        });
+                        statsList.push({ title: statTitle, home: homeVal, away: awayVal });
                     }
                 }
 
@@ -835,7 +1283,6 @@ async function getFullMatchDetails(matchId) {
                     }
                 }
 
-                // إذا لم يرسل المصدر أحداثاً تفصيلية (كما في المباريات الودية)، نبني خطاً زمنياً من النتيجة والإحصائيات
                 if (eventsList.length === 0) {
                     eventsList = buildFallbackEventsForMatch(baseMatch, statsList);
                 }
@@ -848,8 +1295,9 @@ async function getFullMatchDetails(matchId) {
                 const detailed = {
                     ...baseMatch,
                     info: infoList,
-                    stats: statsList,
+                    stats: statsList.length > 0 ? statsList : buildFallbackStats(),
                     events: eventsList,
+                    lineups: buildFallbackLineup(baseMatch.home_team, baseMatch.away_team),
                     poll
                 };
                 matchDetailsCache.set(matchId, detailed);
@@ -860,14 +1308,18 @@ async function getFullMatchDetails(matchId) {
         }
     }
 
+    if (!baseMatch) return null;
+
     return {
         ...baseMatch,
         info: [
             { title: 'البطولة', content: baseMatch.competition },
+            { title: 'ملعب اللقاء', content: 'ملعب معتمد' },
             { title: 'حالة اللقاء', content: baseMatch.status_text }
         ],
-        stats: [],
+        stats: buildFallbackStats(),
         events: buildFallbackEventsForMatch(baseMatch, []),
+        lineups: buildFallbackLineup(baseMatch.home_team, baseMatch.away_team),
         poll: { home: 40, draw: 25, away: 35 }
     };
 }
@@ -1090,25 +1542,45 @@ const requestHandler = async (req, res) => {
 
         if (req.method === 'GET' && (urlObj.pathname === '/api/articles' || urlObj.pathname === '/api/cron')) {
             let articles = loadArticles();
-            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            const userAgent = (req.headers['user-agent'] || '').toLowerCase();
+            const isCronRequest = urlObj.pathname === '/api/cron' ||
+                                  urlObj.searchParams.get('cron') === '1' ||
+                                  userAgent.includes('cron-job.org') ||
+                                  userAgent.includes('cron');
+
             let added = 0;
-            if (articles.length === 0 || lastNewsSyncTime < fiveMinutesAgo || urlObj.pathname === '/api/cron') {
+
+            if (isCronRequest) {
+                // مهمة كرون: سحب خفيف وسريع (خبرين فقط) مع حماية بمهلة 3.5 ثانية لمنع انتهاء وقت Vercel وخطأ HTTP 503
                 try {
-                    const syncRes = await syncAllNewsFromYSScores();
+                    const syncPromise = syncAllNewsFromYSScores(2, 4);
+                    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ addedCount: 0, timedOut: true }), 3500));
+                    const syncRes = await Promise.race([syncPromise, timeoutPromise]);
                     added = syncRes.addedCount || 0;
                     articles = loadArticles();
                 } catch (e) {
-                    console.warn('Sync warning:', e.message);
+                    console.warn('Cron sync warning:', e.message);
                 }
+
+                res.writeHead(200, {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                return res.end(JSON.stringify({
+                    status: 'success',
+                    message: 'تمت المزامنة بنجاح وبسرعة فائقة',
+                    synced: true,
+                    added,
+                    total: articles.length,
+                    timestamp: new Date().toISOString()
+                }));
             }
 
-            const userAgent = (req.headers['user-agent'] || '').toLowerCase();
-            if (urlObj.pathname === '/api/cron' || urlObj.searchParams.get('cron') === '1' || userAgent.includes('cron-job.org')) {
-                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-                return res.end(JSON.stringify({ status: 'ok', synced: true, added, total: articles.length }));
-            }
-
-            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            // للزوار والمستخدمين العاديين: إرجاع المقالات فوراً بدون أي تأخير لضمان سرعة الصفحة
+            res.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Access-Control-Allow-Origin': '*'
+            });
             return res.end(JSON.stringify({ count: articles.length, articles }));
         }
 
@@ -1127,9 +1599,10 @@ const requestHandler = async (req, res) => {
         }
 
         if (req.method === 'GET' && urlObj.pathname === '/api/matches') {
-            const matches = await fetchLiveAndTodayMatches();
+            const dayParam = urlObj.searchParams.get('day') || 'today';
+            const matches = await fetchMatchesForDate(dayParam);
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            return res.end(JSON.stringify({ count: matches.length, matches }));
+            return res.end(JSON.stringify({ day: dayParam, count: matches.length, matches }));
         }
 
         if (req.method === 'GET' && urlObj.pathname.startsWith('/api/matches/')) {

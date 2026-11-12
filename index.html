@@ -275,6 +275,24 @@
                     </div>
 
                     <div id="articles-container" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+
+                    <!-- إعلان مدمج إضافي في أسفل المقالات (Native Banner 2) -->
+                    <div class="glass-card rounded-3xl p-4 sm:p-5 border border-slate-800/80 my-8">
+                        <div class="flex items-center justify-between mb-3 px-1">
+                            <span class="text-xs font-extrabold text-emerald-400 flex items-center gap-2">
+                                <span class="w-1.5 h-4 rounded-full bg-emerald-400"></span>
+                                أخبار مقترحة وإعلانات
+                            </span>
+                            <span class="text-[10px] text-slate-500 font-semibold">إعلان</span>
+                        </div>
+                        <div class="rounded-2xl overflow-hidden bg-slate-950/60 p-2 border border-slate-800/50">
+                            <script async="async" data-cfasync="false" src="https://pl32313476.profitableratecpmnetwork.com/80862fe7c0fbae28c9fc3e987582bc17/invoke.js"></script>
+                            <div id="container-80862fe7c0fbae28c9fc3e987582bc17"></div>
+                        </div>
+                    </div>
+
+                    <!-- شريط التنقل بين الصفحات الذكي (Dynamic Pagination - 30 خبر لكل صفحة) -->
+                    <div id="pagination-container" class="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4"></div>
                 </div>
 
                 <!-- العمود الجانبي (4 أعمدة) -->
@@ -347,29 +365,45 @@
 
         <!-- ==================== ب. واجهة جدول المباريات المقسم حسب البطولات (MATCHES CENTER VIEW) ==================== -->
         <section id="matches-view" class="hidden space-y-6">
-            <div class="glass-card rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-                <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold mb-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                        مركز النتائج والتغطية الحية
+            <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5">
+                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold mb-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            مركز النتائج والتغطية الحية
+                        </div>
+                        <h1 id="matches-main-title" class="text-2xl sm:text-3xl font-black text-white">جدول مباريات اليوم والنتائج المباشرة</h1>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-1">اضغط على أي مباراة لاستعراض التشكيلة الكاملة، الأحداث، مسجلي الأهداف، والإحصائيات</p>
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-white">جدول مباريات اليوم والنتائج المباشرة</h1>
-                    <p class="text-xs sm:text-sm text-slate-400 mt-1">اضغط على أي مباراة لاستعراض الأحداث، مسجلي الأهداف، الإحصائيات، والقنوات الناقلة</p>
+
+                    <!-- أزرار اختيار اليوم: أمس، اليوم، الغد -->
+                    <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-950/90 p-1.5 rounded-2xl border border-slate-800 shrink-0">
+                        <button onclick="selectMatchDay('yesterday')" id="mday-yesterday" class="px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white">
+                            📅 مباريات أمس
+                        </button>
+                        <button onclick="selectMatchDay('today')" id="mday-today" class="px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition bg-emerald-500 text-slate-950 shadow">
+                            ⚽ مباريات اليوم
+                        </button>
+                        <button onclick="selectMatchDay('tomorrow')" id="mday-tomorrow" class="px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white">
+                            🔮 مباريات الغد
+                        </button>
+                    </div>
                 </div>
 
                 <!-- فلاتر حالة المباراة -->
-                <div class="flex flex-wrap items-center gap-2 bg-slate-950/90 p-1.5 rounded-2xl border border-slate-800">
-                    <button onclick="filterMatches('all')" id="mfilter-all" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition">
-                        جميع المباريات
+                <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-800/80">
+                    <span class="text-xs font-bold text-slate-400 ml-2">فلترة المباريات:</span>
+                    <button onclick="filterMatches('all')" id="mfilter-all" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition">
+                        الكل
                     </button>
-                    <button onclick="filterMatches('live')" id="mfilter-live" class="px-4 py-2 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                    <button onclick="filterMatches('live')" id="mfilter-live" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
                         مباشر الآن
                     </button>
-                    <button onclick="filterMatches('finished')" id="mfilter-finished" class="px-4 py-2 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition">
+                    <button onclick="filterMatches('finished')" id="mfilter-finished" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition">
                         انتهت
                     </button>
-                    <button onclick="filterMatches('upcoming')" id="mfilter-upcoming" class="px-4 py-2 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition">
+                    <button onclick="filterMatches('upcoming')" id="mfilter-upcoming" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-slate-300 hover:text-white transition">
                         قادمة
                     </button>
                 </div>
@@ -671,12 +705,15 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-slate-800/70">
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-6 pt-4 border-t border-slate-800/70">
                     <button onclick="switchMatchModalTab('events')" id="md-tab-events" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition">
                         ⚡ أحداث المباراة
                     </button>
                     <button onclick="switchMatchModalTab('stats')" id="md-tab-stats" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 hover:text-white border border-slate-800 transition">
                         📊 الإحصائيات
+                    </button>
+                    <button onclick="switchMatchModalTab('lineup')" id="md-tab-lineup" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 hover:text-white border border-slate-800 transition">
+                        📋 التشكيلة والخطة
                     </button>
                     <button onclick="switchMatchModalTab('info')" id="md-tab-info" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 hover:text-white border border-slate-800 transition">
                         🏟️ بطاقة اللقاء والقناة
@@ -687,6 +724,7 @@
             <div class="p-6 overflow-y-auto flex-1 space-y-6">
                 <div id="md-content-events" class="space-y-3"></div>
                 <div id="md-content-stats" class="hidden space-y-4"></div>
+                <div id="md-content-lineup" class="hidden space-y-5"></div>
                 <div id="md-content-info" class="hidden space-y-5"></div>
             </div>
         </div>
@@ -724,6 +762,8 @@
         let allArticles = [];
         let allMatches = [];
         let activeCategory = "الكل";
+        let currentPage = 1;
+        const ARTICLES_PER_PAGE = 30;
         let activeStandingsLeague = "epl";
         let searchQuery = "";
         let newsLayout = "grid";
@@ -789,9 +829,11 @@
             }
         }
 
-        async function loadMatchesFromServer() {
+        let activeMatchDay = 'today';
+
+        async function loadMatchesFromServer(day = activeMatchDay) {
             try {
-                const res = await fetch("/api/matches");
+                const res = await fetch(`/api/matches?day=${encodeURIComponent(day)}`);
                 if (res.ok) {
                     const data = await res.json();
                     allMatches = data.matches || [];
@@ -802,6 +844,39 @@
             } catch (e) {
                 console.error("Failed to fetch matches:", e);
             }
+        }
+
+        async function selectMatchDay(day) {
+            activeMatchDay = day;
+            ['yesterday', 'today', 'tomorrow'].forEach(d => {
+                const btn = document.getElementById(`mday-${d}`);
+                if (!btn) return;
+                if (d === day) {
+                    btn.className = "px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition bg-emerald-500 text-slate-950 shadow";
+                } else {
+                    btn.className = "px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition text-slate-300 hover:text-white";
+                }
+            });
+
+            const titleEl = document.getElementById("matches-main-title");
+            if (titleEl) {
+                const dayTitles = {
+                    yesterday: 'نتائج وتفاصيل مباريات الأمس',
+                    today: 'جدول مباريات اليوم والنتائج المباشرة',
+                    tomorrow: 'مواعيد وجدول مباريات الغد'
+                };
+                titleEl.textContent = dayTitles[day] || 'جدول المباريات والنتائج';
+            }
+
+            const container = document.getElementById("matches-grouped-container");
+            if (container) {
+                container.innerHTML = `
+                    <div class="glass-card rounded-3xl p-12 text-center animate-pulse">
+                        <p class="text-sm font-bold text-slate-300">جاري تحميل مباريات ${day === 'yesterday' ? 'أمس' : (day === 'tomorrow' ? 'الغد' : 'اليوم')}...</p>
+                    </div>
+                `;
+            }
+            await loadMatchesFromServer(day);
         }
 
         // 1. شريط المباريات العلوي
@@ -1240,6 +1315,7 @@
 
         function selectCategory(cat) {
             activeCategory = cat;
+            currentPage = 1; // إعادة الضبط إلى الصفحة الأولى عند تغيير القسم
             document.getElementById("current-category-heading").textContent = cat === "الكل" ? "أحدث التغطيات الإخبارية" : `أخبار ${cat}`;
             renderCategoriesBar();
             switchMainTab('news');
@@ -1248,12 +1324,20 @@
 
         function handleSearch(value) {
             searchQuery = value.trim().toLowerCase();
+            currentPage = 1; // إعادة الضبط إلى الصفحة الأولى عند البحث
             switchMainTab('news');
             renderHome();
         }
 
         function getFilteredArticles() {
             return allArticles.filter(art => {
+                // حجب واستبعاد مقالات تحميل التطبيقات وروابط APK المزعجة (مثل يلا شووت)
+                const titleLower = (art.title || '').toLowerCase();
+                const contentLower = (art.content || '').toLowerCase();
+                if (titleLower.includes('تحميل تطبيق') || titleLower.includes('يلا شووت') || titleLower.includes('يلا شوت') || titleLower.includes('تطبيق يلا') || titleLower.includes('apk') || contentLower.includes('تحميل تطبيق يلا')) {
+                    return false;
+                }
+
                 const matchesCat = activeCategory === "الكل" || art.category === activeCategory;
                 const matchesSearch = !searchQuery ||
                     art.title.toLowerCase().includes(searchQuery) ||
@@ -1270,6 +1354,7 @@
             const bentoContainer = document.getElementById("bento-hero-container");
             const articlesContainer = document.getElementById("articles-container");
             const trendingList = document.getElementById("trending-sidebar-list");
+            const paginationContainer = document.getElementById("pagination-container");
 
             const topTrending = [...allArticles].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
             if (trendingList) {
@@ -1290,6 +1375,7 @@
             }
 
             if (filtered.length === 0) {
+                bentoContainer.style.display = "none";
                 bentoContainer.innerHTML = "";
                 articlesContainer.innerHTML = `
                     <div class="col-span-full glass-card rounded-3xl p-12 text-center">
@@ -1297,68 +1383,84 @@
                         <button onclick="selectCategory('الكل')" class="mt-2 px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-extrabold">عرض جميع الأخبار</button>
                     </div>
                 `;
+                if (paginationContainer) paginationContainer.innerHTML = "";
                 return;
             }
 
-            const mainHero = filtered[0];
-            const sideHeroes = filtered.slice(1, 3);
-            const restArticles = filtered.slice(3);
+            // حساب عدد الصفحات ديناميكياً (30 خبر لكل صفحة، ويزداد تلقائياً كلما زادت الأخبار)
+            const totalPages = Math.ceil(filtered.length / ARTICLES_PER_PAGE) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
 
-            bentoContainer.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div
-                        onclick="openArticle(${mainHero.id})"
-                        class="lg:col-span-7 cursor-pointer group relative rounded-3xl overflow-hidden h-[380px] sm:h-[460px] glass-card card-hover"
-                    >
-                        <img src="${mainHero.image_url}" alt="${mainHero.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
-                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"></div>
-                        <div class="absolute top-5 right-5 flex items-center gap-2">
-                            <span class="px-3.5 py-1 rounded-full text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-lg">
-                                ${mainHero.category}
-                            </span>
-                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-500/90 text-white shadow-lg">
-                                القصة الأبرز
-                            </span>
-                        </div>
-                        <div class="absolute bottom-0 inset-x-0 p-6 sm:p-8 space-y-3">
-                            <div class="flex items-center gap-2 text-xs text-emerald-400 font-bold">
-                                <span>${mainHero.created_at}</span>
-                                <span>•</span>
-                                <span>👁️ ${mainHero.views || 1} قراءة</span>
-                            </div>
-                            <h1 class="text-2xl sm:text-3xl font-black text-white group-hover:text-emerald-400 transition leading-snug">
-                                ${mainHero.title}
-                            </h1>
-                            <p class="text-slate-300 text-xs sm:text-sm line-clamp-2 leading-relaxed">
-                                ${mainHero.summary}
-                            </p>
-                        </div>
-                    </div>
+            let listToRender = [];
 
-                    <div class="lg:col-span-5 flex flex-col gap-6">
-                        ${sideHeroes.map(sub => `
-                            <div
-                                onclick="openArticle(${sub.id})"
-                                class="flex-1 cursor-pointer group relative rounded-3xl overflow-hidden min-h-[215px] glass-card card-hover"
-                            >
-                                <img src="${sub.image_url}" alt="${sub.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
-                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-transparent"></div>
-                                <span class="absolute top-4 right-4 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500 text-slate-950">
-                                    ${sub.category}
+            if (currentPage === 1) {
+                // الصفحة الأولى: إظهار Bento Hero (3 أخبار مميزة) + 27 خبراً في الشبكة (المجموع 30 خبراً)
+                bentoContainer.style.display = "block";
+                const mainHero = filtered[0];
+                const sideHeroes = filtered.slice(1, 3);
+                listToRender = filtered.slice(3, ARTICLES_PER_PAGE);
+
+                bentoContainer.innerHTML = `
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div
+                            onclick="openArticle(${mainHero.id})"
+                            class="lg:col-span-7 cursor-pointer group relative rounded-3xl overflow-hidden h-[380px] sm:h-[460px] glass-card card-hover"
+                        >
+                            <img src="${mainHero.image_url}" alt="${mainHero.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"></div>
+                            <div class="absolute top-5 right-5 flex items-center gap-2">
+                                <span class="px-3.5 py-1 rounded-full text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-lg">
+                                    ${mainHero.category}
                                 </span>
-                                <div class="absolute bottom-0 inset-x-0 p-5 space-y-1.5">
-                                    <span class="text-[11px] text-slate-300">${sub.created_at}</span>
-                                    <h3 class="text-base sm:text-lg font-extrabold text-white group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
-                                        ${sub.title}
-                                    </h3>
-                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-500/90 text-white shadow-lg">
+                                    القصة الأبرز
+                                </span>
                             </div>
-                        `).join("")}
-                    </div>
-                </div>
-            `;
+                            <div class="absolute bottom-0 inset-x-0 p-6 sm:p-8 space-y-3">
+                                <div class="flex items-center gap-2 text-xs text-emerald-400 font-bold">
+                                    <span>${mainHero.created_at}</span>
+                                    <span>•</span>
+                                    <span>👁️ ${mainHero.views || 1} قراءة</span>
+                                </div>
+                                <h1 class="text-2xl sm:text-3xl font-black text-white group-hover:text-emerald-400 transition leading-snug">
+                                    ${mainHero.title}
+                                </h1>
+                                <p class="text-slate-300 text-xs sm:text-sm line-clamp-2 leading-relaxed">
+                                    ${mainHero.summary}
+                                </p>
+                            </div>
+                        </div>
 
-            const listToRender = restArticles.length > 0 ? restArticles : filtered;
+                        <div class="lg:col-span-5 flex flex-col gap-6">
+                            ${sideHeroes.map(sub => `
+                                <div
+                                    onclick="openArticle(${sub.id})"
+                                    class="flex-1 cursor-pointer group relative rounded-3xl overflow-hidden min-h-[215px] glass-card card-hover"
+                                >
+                                    <img src="${sub.image_url}" alt="${sub.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-transparent"></div>
+                                    <span class="absolute top-4 right-4 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500 text-slate-950">
+                                        ${sub.category}
+                                    </span>
+                                    <div class="absolute bottom-0 inset-x-0 p-5 space-y-1.5">
+                                        <span class="text-[11px] text-slate-300">${sub.created_at}</span>
+                                        <h3 class="text-base sm:text-lg font-extrabold text-white group-hover:text-emerald-400 transition line-clamp-2 leading-snug">
+                                            ${sub.title}
+                                        </h3>
+                                    </div>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // الصفحات التالية (2، 3، 4، 5...): إخفاء Bento Hero وعرض 30 خبراً كاملاً في الشبكة
+                bentoContainer.style.display = "none";
+                bentoContainer.innerHTML = "";
+                const startIndex = (currentPage - 1) * ARTICLES_PER_PAGE;
+                listToRender = filtered.slice(startIndex, startIndex + ARTICLES_PER_PAGE);
+            }
 
             if (newsLayout === 'list') {
                 articlesContainer.className = "space-y-5";
@@ -1432,11 +1534,9 @@
 
                         <div class="px-5 pb-5 pt-3 border-t border-slate-800/60 space-y-3">
                             <div class="flex flex-wrap gap-1.5">
-                                ${(article.tags || []).slice(0, 3).map(tag => `
-                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800">
-                                        #${tag}
-                                    </span>
-                                `).join("")}
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-900 text-slate-300 border border-slate-800">
+                                    #${(article.tags && article.tags[0]) || 'أخبار الرياضة'}
+                                </span>
                             </div>
 
                             <div class="flex items-center justify-between text-xs text-slate-400">
@@ -1446,6 +1546,91 @@
                         </div>
                     </article>
                 `).join("");
+            }
+
+            renderPagination(totalPages, filtered.length);
+        }
+
+        function renderPagination(totalPages, totalCount) {
+            const container = document.getElementById("pagination-container");
+            if (!container) return;
+
+            if (totalPages <= 1) {
+                container.innerHTML = `
+                    <div class="text-xs text-slate-400 font-bold">
+                        عرض جميع الأخبار (${totalCount} خبر)
+                    </div>
+                `;
+                return;
+            }
+
+            const startItem = (currentPage - 1) * ARTICLES_PER_PAGE + 1;
+            const endItem = Math.min(currentPage * ARTICLES_PER_PAGE, totalCount);
+
+            let pagesHtml = '';
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
+                    const isActive = p === currentPage;
+                    pagesHtml += `
+                        <button
+                            onclick="goToPage(${p})"
+                            class="w-10 h-10 rounded-xl text-xs font-black transition flex items-center justify-center ${
+                                isActive
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/25 scale-105'
+                                    : 'bg-slate-900/90 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800'
+                            }"
+                        >
+                            ${p}
+                        </button>
+                    `;
+                } else if (p === currentPage - 3 || p === currentPage + 3) {
+                    pagesHtml += `<span class="px-1 text-slate-500 font-bold text-xs select-none">...</span>`;
+                }
+            }
+
+            container.innerHTML = `
+                <div class="text-xs text-slate-400 font-bold flex items-center gap-2">
+                    <span>عرض <strong class="text-emerald-400">${startItem} - ${endItem}</strong> من أصل <strong class="text-white">${totalCount}</strong> خبر</span>
+                    <span class="text-slate-600">•</span>
+                    <span>صفحة <strong class="text-emerald-400">${currentPage}</strong> من <strong class="text-white">${totalPages}</strong></span>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap justify-center">
+                    <button
+                        onclick="goToPage(${currentPage - 1})"
+                        ${currentPage === 1 ? 'disabled' : ''}
+                        class="px-3.5 h-10 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                            currentPage === 1
+                                ? 'opacity-40 cursor-not-allowed bg-slate-900/50 text-slate-500 border border-slate-800/50'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:text-emerald-400'
+                        }"
+                    >
+                        <i class="fas fa-chevron-right text-[10px]"></i> السابق
+                    </button>
+
+                    ${pagesHtml}
+
+                    <button
+                        onclick="goToPage(${currentPage + 1})"
+                        ${currentPage === totalPages ? 'disabled' : ''}
+                        class="px-3.5 h-10 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                            currentPage === totalPages
+                                ? 'opacity-40 cursor-not-allowed bg-slate-900/50 text-slate-500 border border-slate-800/50'
+                                : 'bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:text-emerald-400'
+                        }"
+                    >
+                        التالي <i class="fas fa-chevron-left text-[10px]"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function goToPage(pageNum) {
+            currentPage = pageNum;
+            renderHome();
+            const heading = document.getElementById("current-category-heading");
+            if (heading) {
+                heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
 
@@ -1719,15 +1904,17 @@
         }
 
         function switchMatchModalTab(tab) {
-            ['events', 'stats', 'info'].forEach(t => {
+            ['events', 'stats', 'lineup', 'info'].forEach(t => {
                 const btn = document.getElementById(`md-tab-${t}`);
                 const panel = document.getElementById(`md-content-${t}`);
-                if (t === tab) {
-                    btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition";
-                    panel.classList.remove("hidden");
-                } else {
-                    btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 hover:text-white border border-slate-800 transition";
-                    panel.classList.add("hidden");
+                if (btn && panel) {
+                    if (t === tab) {
+                        btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-slate-950 transition";
+                        panel.classList.remove("hidden");
+                    } else {
+                        btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 hover:text-white border border-slate-800 transition";
+                        panel.classList.add("hidden");
+                    }
                 }
             });
         }
@@ -1735,6 +1922,7 @@
         function renderMatchDetailTabs(details) {
             const eventsBox = document.getElementById("md-content-events");
             const statsBox = document.getElementById("md-content-stats");
+            const lineupBox = document.getElementById("md-content-lineup");
             const infoBox = document.getElementById("md-content-info");
 
             if (details.home_score !== undefined && details.home_score !== null) {
@@ -1844,6 +2032,107 @@
                         </div>
                     `;
                 }).join("");
+            }
+
+            // ج) تشكيلة الفريقين وخطة اللعب والبدلاء
+            const lineups = details.lineups || { home: { starters: [], bench: [] }, away: { starters: [], bench: [] } };
+            const homeStarters = (lineups.home && lineups.home.starters) || [];
+            const awayStarters = (lineups.away && lineups.away.starters) || [];
+            const homeBench = (lineups.home && lineups.home.bench) || [];
+            const awayBench = (lineups.away && lineups.away.bench) || [];
+
+            if (lineupBox) {
+                lineupBox.innerHTML = `
+                    <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm font-extrabold text-white">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+                            <span>${details.home_team} (${lineups.home?.formation || '4-3-3'})</span>
+                        </div>
+                        <span class="text-xs px-3 py-1 rounded-xl bg-slate-950 text-slate-300 font-bold border border-slate-800">
+                            ${lineups.home?.is_probable ? '📋 تشكيلة متوقعة' : '✅ تشكيلة رسمية معتمدة'}
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <span>(${lineups.away?.formation || '4-2-3-1'}) ${details.away_team}</span>
+                            <span class="w-3 h-3 rounded-full bg-cyan-400"></span>
+                        </div>
+                    </div>
+
+                    <!-- التشكيلة الأساسية (Starting XI) جنباً إلى جنب -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- الفريق المستضيف -->
+                        <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/90 space-y-2.5">
+                            <h4 class="text-xs font-black text-emerald-400 border-b border-slate-800 pb-2 flex items-center justify-between">
+                                <span>🟢 التشكيلة الأساسية - ${details.home_team}</span>
+                                <span class="text-[11px] text-slate-400">(${homeStarters.length} لاعب)</span>
+                            </h4>
+                            <div class="space-y-1.5">
+                                ${homeStarters.map(p => `
+                                    <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950/70 border border-slate-800/60 hover:bg-slate-900 transition">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 font-black text-[11px] flex items-center justify-center shrink-0 border border-emerald-500/30">${p.num || '•'}</span>
+                                            <img src="${p.photo || 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96'}" class="w-7 h-7 rounded-full object-cover bg-slate-800 shrink-0" onerror="this.src='https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96'" />
+                                            <span class="text-xs font-bold text-white">${p.name}</span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-semibold px-2 py-0.5 rounded bg-slate-900">${p.pos}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- الفريق الضيف -->
+                        <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/90 space-y-2.5">
+                            <h4 class="text-xs font-black text-cyan-400 border-b border-slate-800 pb-2 flex items-center justify-between">
+                                <span>🔵 التشكيلة الأساسية - ${details.away_team}</span>
+                                <span class="text-[11px] text-slate-400">(${awayStarters.length} لاعب)</span>
+                            </h4>
+                            <div class="space-y-1.5">
+                                ${awayStarters.map(p => `
+                                    <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950/70 border border-slate-800/60 hover:bg-slate-900 transition">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 font-black text-[11px] flex items-center justify-center shrink-0 border border-cyan-500/30">${p.num || '•'}</span>
+                                            <img src="${p.photo || 'https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96'}" class="w-7 h-7 rounded-full object-cover bg-slate-800 shrink-0" onerror="this.src='https://a.espncdn.com/combiner/i?img=/i/headshots/soccer/players/full/default.png&w=96&h=96'" />
+                                            <span class="text-xs font-bold text-white">${p.name}</span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 font-semibold px-2 py-0.5 rounded bg-slate-900">${p.pos}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- البدلاء (Bench) -->
+                    ${(homeBench.length > 0 || awayBench.length > 0) ? `
+                        <div class="p-4 rounded-2xl bg-slate-900/50 border border-slate-800 space-y-3">
+                            <h4 class="text-xs font-black text-slate-300">👥 مقاعد البدلاء والاحتياط:</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-1.5">
+                                    <span class="text-[11px] font-bold text-emerald-400 block">${details.home_team}:</span>
+                                    ${homeBench.map(p => `
+                                        <div class="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-slate-950/50 text-slate-300">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-slate-500 font-bold">${p.num}</span>
+                                                <span>${p.name}</span>
+                                            </div>
+                                            <span class="text-[10px] text-slate-400">${p.pos}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="space-y-1.5">
+                                    <span class="text-[11px] font-bold text-cyan-400 block">${details.away_team}:</span>
+                                    ${awayBench.map(p => `
+                                        <div class="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-slate-950/50 text-slate-300">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-slate-500 font-bold">${p.num}</span>
+                                                <span>${p.name}</span>
+                                            </div>
+                                            <span class="text-[10px] text-slate-400">${p.pos}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
             }
 
             const info = details.info || [];
