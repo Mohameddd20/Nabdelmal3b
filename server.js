@@ -1515,7 +1515,7 @@ const requestHandler = async (req, res) => {
 
         if (req.method === 'GET' && urlObj.pathname === '/sitemap.xml') {
             const articles = loadArticles();
-            const urlsXml = articles.slice(0, 50).map(a => `
+            const urlsXml = articles.map(a => `
   <url>
     <loc>https://${host}/#article-${a.id}</loc>
     <changefreq>hourly</changefreq>
