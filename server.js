@@ -1517,9 +1517,9 @@ const requestHandler = async (req, res) => {
             const articles = loadArticles();
             const urlsXml = articles.map(a => `
   <url>
-    <loc>https://${host}/#article-${a.id}</loc>
+    <loc>https://${host}/news/${a.id}</loc>
     <changefreq>hourly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>`).join('');
 
             const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1534,8 +1534,41 @@ const requestHandler = async (req, res) => {
             return res.end(sitemap);
         }
 
-        if (req.method === 'GET' && (urlObj.pathname === '/' || urlObj.pathname === '/index.html')) {
-            const html = fs.readFileSync(HTML_FILE, 'utf8');
+        const newsRouteMatch = urlObj.pathname.match(/^\/(news|article)\/(\d+)/);
+        if (req.method === 'GET' && (urlObj.pathname === '/' || urlObj.pathname === '/index.html' || newsRouteMatch)) {
+            let html = fs.readFileSync(HTML_FILE, 'utf8');
+
+            if (newsRouteMatch) {
+                const articleId = Number(newsRouteMatch[2]);
+                const articles = loadArticles();
+                const art = articles.find(a => a.id === articleId);
+                if (art) {
+                    const escapedTitle = (art.title || '').replace(/"/g, '&quot;');
+                    const escapedSummary = (art.summary || '').replace(/"/g, '&quot;').slice(0, 160);
+                    const articleUrl = `https://${host}/news/${art.id}`;
+                    const imgUrl = art.image_url || `https://${host}/favicon.ico`;
+
+                    html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapedTitle} | KoraTime كورة تايم</title>`);
+                    html = html.replace(/<meta name="description"[\s\S]*?>/i, `<meta name="description" content="${escapedSummary}" />`);
+
+                    const seoTags = `
+    <!-- Dedicated Article SEO & OpenGraph Tags -->
+    <link rel="canonical" href="${articleUrl}" />
+    <meta property="og:title" content="${escapedTitle}" />
+    <meta property="og:description" content="${escapedSummary}" />
+    <meta property="og:image" content="${imgUrl}" />
+    <meta property="og:url" content="${articleUrl}" />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapedTitle}" />
+    <meta name="twitter:description" content="${escapedSummary}" />
+    <meta name="twitter:image" content="${imgUrl}" />
+    <script>window.INITIAL_ARTICLE_ID = ${art.id};</script>`;
+
+                    html = html.replace('</head>', `${seoTags}\n</head>`);
+                }
+            }
+
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
             return res.end(html);
         }

@@ -778,6 +778,22 @@
                 loadStandingsFromServer("epl")
             ]);
 
+            // فتح صفحة الخبر مباشرة إذا كان الرابط مستقلاً (مثل /news/14093769 أو /article/14093769)
+            const initialArticleId = window.INITIAL_ARTICLE_ID || (window.location.pathname.match(/^\/(news|article)\/(\d+)/)?.[2]);
+            if (initialArticleId) {
+                openArticle(Number(initialArticleId), false);
+            }
+
+            // دعم التنقل الطبيعي لأزرار الرجوع والتقدم في المتصفح
+            window.addEventListener('popstate', (e) => {
+                const routeMatch = window.location.pathname.match(/^\/(news|article)\/(\d+)/);
+                if (routeMatch) {
+                    openArticle(Number(routeMatch[2]), false);
+                } else {
+                    switchMainTab('news', false);
+                }
+            });
+
             startBreakingTicker();
 
             setInterval(loadArticlesFromServer, 60 * 1000);
@@ -1098,7 +1114,7 @@
             }).join("");
         }
 
-        function switchMainTab(tab) {
+        function switchMainTab(tab, updateHistory = true) {
             const homeView = document.getElementById("home-view");
             const matchesView = document.getElementById("matches-view");
             const standingsView = document.getElementById("standings-view");
@@ -1135,6 +1151,10 @@
                 catWrapper.classList.remove("hidden");
                 homeView.classList.remove("hidden");
                 btnNews.className = activeClass;
+                if (updateHistory && window.location.pathname !== '/') {
+                    history.pushState(null, '', '/');
+                    document.title = 'KoraTime | كورة تايم — بوابة الأخبار الرياضية ونتائج المباريات المباشرة';
+                }
             }
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
@@ -1335,7 +1355,7 @@
             const topTrending = [...allArticles].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
             if (trendingList) {
                 trendingList.innerHTML = topTrending.map((item, idx) => `
-                    <div onclick="openArticle(${item.id})" class="cursor-pointer group flex items-start gap-3.5 p-2.5 rounded-2xl hover:bg-slate-900/80 transition">
+                    <a href="/news/${item.id}" onclick="event.preventDefault();openArticle(${item.id})" class="cursor-pointer group flex items-start gap-3.5 p-2.5 rounded-2xl hover:bg-slate-900/80 transition no-underline">
                         <span class="w-7 h-7 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
                             ${idx + 1}
                         </span>
@@ -1346,7 +1366,7 @@
                             </h4>
                             <span class="text-[10px] text-slate-500 mt-1 block">👁️ ${item.views || 1} قراءة</span>
                         </div>
-                    </div>
+                    </a>
                 `).join("");
             }
 
@@ -1379,9 +1399,10 @@
 
                 bentoContainer.innerHTML = `
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div
-                            onclick="openArticle(${mainHero.id})"
-                            class="lg:col-span-7 cursor-pointer group relative rounded-3xl overflow-hidden h-[380px] sm:h-[460px] glass-card card-hover"
+                        <a
+                            href="/news/${mainHero.id}"
+                            onclick="event.preventDefault();openArticle(${mainHero.id})"
+                            class="lg:col-span-7 cursor-pointer group relative rounded-3xl overflow-hidden h-[380px] sm:h-[460px] glass-card card-hover block no-underline"
                         >
                             <img src="${mainHero.image_url}" alt="${mainHero.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"></div>
@@ -1406,13 +1427,14 @@
                                     ${mainHero.summary}
                                 </p>
                             </div>
-                        </div>
+                        </a>
 
                         <div class="lg:col-span-5 flex flex-col gap-6">
                             ${sideHeroes.map(sub => `
-                                <div
-                                    onclick="openArticle(${sub.id})"
-                                    class="flex-1 cursor-pointer group relative rounded-3xl overflow-hidden min-h-[215px] glass-card card-hover"
+                                <a
+                                    href="/news/${sub.id}"
+                                    onclick="event.preventDefault();openArticle(${sub.id})"
+                                    class="flex-1 cursor-pointer group relative rounded-3xl overflow-hidden min-h-[215px] glass-card card-hover block no-underline"
                                 >
                                     <img src="${sub.image_url}" alt="${sub.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
                                     <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-transparent"></div>
@@ -1425,7 +1447,7 @@
                                             ${sub.title}
                                         </h3>
                                     </div>
-                                </div>
+                                </a>
                             `).join("")}
                         </div>
                     </div>
@@ -1441,9 +1463,10 @@
             if (newsLayout === 'list') {
                 articlesContainer.className = "space-y-5";
                 articlesContainer.innerHTML = listToRender.map(article => `
-                    <article
-                        onclick="openArticle(${article.id})"
-                        class="cursor-pointer glass-card rounded-3xl overflow-hidden p-4 sm:p-5 flex flex-col sm:flex-row gap-5 card-hover group"
+                    <a
+                        href="/news/${article.id}"
+                        onclick="event.preventDefault();openArticle(${article.id})"
+                        class="cursor-pointer glass-card rounded-3xl overflow-hidden p-4 sm:p-5 flex flex-col sm:flex-row gap-5 card-hover group no-underline block"
                     >
                         <div class="relative w-full sm:w-64 h-48 sm:h-44 rounded-2xl overflow-hidden shrink-0 bg-slate-900">
                             <img src="${article.image_url}" alt="${article.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
@@ -1474,14 +1497,15 @@
                                 <span class="text-xs font-extrabold text-emerald-400">قراءة التقرير ←</span>
                             </div>
                         </div>
-                    </article>
+                    </a>
                 `).join("");
             } else {
                 articlesContainer.className = "grid grid-cols-1 sm:grid-cols-2 gap-6";
                 articlesContainer.innerHTML = listToRender.map(article => `
-                    <article
-                        onclick="openArticle(${article.id})"
-                        class="cursor-pointer glass-card rounded-3xl overflow-hidden flex flex-col justify-between card-hover group"
+                    <a
+                        href="/news/${article.id}"
+                        onclick="event.preventDefault();openArticle(${article.id})"
+                        class="cursor-pointer glass-card rounded-3xl overflow-hidden flex flex-col justify-between card-hover group no-underline block"
                     >
                         <div>
                             <div class="relative h-52 w-full overflow-hidden bg-slate-900">
@@ -1520,7 +1544,7 @@
                                 <span>👁️ ${article.views || 1}</span>
                             </div>
                         </div>
-                    </article>
+                    </a>
                 `).join("");
             }
 
@@ -1624,7 +1648,7 @@
                 .join("");
         }
 
-        async function openArticle(articleId) {
+        async function openArticle(articleId, pushState = true) {
             let article = allArticles.find(a => a.id === articleId);
             try {
                 const res = await fetch(`/api/articles/${articleId}`);
@@ -1637,6 +1661,21 @@
 
             if (!article) return;
             currentArticle = article;
+
+            // ===== تحديث رابط المتصفح ليصبح رابطاً مستقلاً خاصاً بالمقال =====
+            if (pushState) {
+                const articleSlug = (article.title || '')
+                    .replace(/\s+/g, '-')
+                    .replace(/[^\u0600-\u06FFa-zA-Z0-9\-]/g, '')
+                    .slice(0, 60);
+                const cleanSlug = articleSlug || String(article.id);
+                history.pushState({ articleId: article.id }, article.title, `/news/${article.id}/${cleanSlug}`);
+                document.title = `${article.title} | KoraTime كورة تايم`;
+                // تحديث meta description ديناميكياً
+                let metaDesc = document.querySelector('meta[name="description"]');
+                if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = 'description'; document.head.appendChild(metaDesc); }
+                metaDesc.content = (article.summary || '').slice(0, 160);
+            }
 
             const wordCount = (article.content || "").trim().split(/\s+/).filter(Boolean).length;
             const readMins = Math.max(2, Math.ceil(wordCount / 130));
@@ -1660,7 +1699,7 @@
 
             const related = allArticles.filter(a => a.id !== article.id).slice(0, 6);
             document.getElementById("related-articles-list").innerHTML = related.map(rel => `
-                <div onclick="openArticle(${rel.id})" class="cursor-pointer group flex items-center gap-3.5 p-2.5 rounded-2xl hover:bg-slate-900/90 transition">
+                <a href="/news/${rel.id}" onclick="event.preventDefault();openArticle(${rel.id})" class="cursor-pointer group flex items-center gap-3.5 p-2.5 rounded-2xl hover:bg-slate-900/90 transition no-underline">
                     <img src="${rel.image_url}" alt="${rel.title}" class="w-20 h-16 rounded-xl object-cover shrink-0" />
                     <div class="min-w-0">
                         <span class="text-[10px] font-bold text-emerald-400">${rel.category}</span>
@@ -1668,7 +1707,7 @@
                             ${rel.title}
                         </h4>
                     </div>
-                </div>
+                </a>
             `).join("");
 
             document.getElementById("home-view").classList.add("hidden");
@@ -1803,7 +1842,8 @@
 
         function shareArticle(platform) {
             if (!currentArticle) return;
-            const shareUrl = window.location.href.split("#")[0] + `#article-${currentArticle.id}`;
+            // استخدام الرابط المستقل الجديد للمشاركة بدلاً من رابط الهاش القديم
+            const shareUrl = window.location.href;
             const shareText = `${currentArticle.title}\n\n${currentArticle.summary}\n`;
 
             const encodedText = encodeURIComponent(shareText);
@@ -1818,7 +1858,7 @@
             } else if (platform === "telegram") {
                 window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, "_blank");
             } else if (platform === "copy") {
-                navigator.clipboard.writeText(`${currentArticle.title}\n${shareUrl}`);
+                navigator.clipboard.writeText(shareUrl);
                 const btn = document.getElementById("copy-link-btn");
                 const oldText = btn.innerHTML;
                 btn.innerHTML = `<span class="text-emerald-400">✔ تم النسخ!</span>`;
